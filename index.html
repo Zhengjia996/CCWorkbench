@@ -666,6 +666,9 @@ function scoreEssay(f, opts){
   opts = opts || {};
   const need = opts.needChars || 800;
   const writingOpt = opts.writing || 'normal'; // normal / messy / blur / unreadable
+  /* 标点考察规则：粘贴文字提交直接略过；其他方式提交最多在表达维度扣 1 分 */
+  const isPaste = opts.srcType === 'paste';
+  const punctErrs = isPaste ? 0 : f.punctErrs;
 
   /* ---- 内容(20) ---- */
   let C = 12;
@@ -686,7 +689,7 @@ function scoreEssay(f, opts){
   E -= Math.min(3, f.runon);
   E -= Math.min(3, f.illnessN*0.5);
   if(f.avgLen>40) E-=1;
-  if(f.punctErrs>=3) E-=1;
+  if(punctErrs>=3) E-=1;
   E = roundHalf(clamp(E,0,20));
 
   /* ---- 发展等级(10) ---- */
@@ -736,10 +739,10 @@ function scoreEssay(f, opts){
     const pts = Math.floor(deficit/50)*2;
     if(pts>0) ded.push({label:'字数不足', pts, note:'约 '+f.chars+' 字，距规定 '+need+' 字差 '+deficit+' 字，每少 50 字扣 2 分'});
   }
-  const typoUnits = f.typoTerms + Math.floor(f.punctErrs/3);
+  const typoUnits = f.typoTerms; /* 标点不再计入错别字扣分，仅在表达维度最多扣 1 分 */
   if(typoUnits>=2){
     const pts = Math.min(3, Math.floor(typoUnits/2));
-    ded.push({label:'错别字/标点', pts, note:'检出错别字 '+f.typoTerms+' 类'+(f.punctErrs>=3?('，标点问题 '+f.punctErrs+' 处（每3处计1个错别字）'):'')+'，每 2 个扣 1 分，最多扣 3 分'});
+    ded.push({label:'错别字', pts, note:'检出错别字 '+f.typoTerms+' 类，每 2 个扣 1 分，最多扣 3 分'+(punctErrs>=3?('；标点问题 '+punctErrs+' 处已计入表达维度扣 1 分'+(isPaste?'（本次为粘贴提交，实际略过标点考察）':'')):'')});
   }
   const writingPts = {normal:0, messy:2, blur:3, unreadable:4}[writingOpt] || 0;
   if(writingPts>0){
@@ -763,7 +766,7 @@ function scoreEssay(f, opts){
     (f.chars<600?'；字数不足 600 字，内容单薄':'')+'。';
   const eComment = '全文 '+f.paraCount+' 段、约 '+f.chars+' 字；'+(f.runon?('检出 '+f.runon+' 处“一逗到底”式长句；'):'')+
     (f.illnessN?('病句 '+f.illnessN+' 处；'):'')+'句均长 '+f.avgLen+' 字'+(f.avgLen>40?'，句式偏长':'，长短结合')+
-    (f.punctErrs>=3?'；标点使用存在明显问题':'')+(f.paraCount<=1?'；通篇未合理分段，按标准应在表达项内降等':'')+'。';
+    (punctErrs>=3?'；标点使用存在明显问题（标点考察最多扣 1 分'+(isPaste?'，本次粘贴提交已略过':'')+'）':'')+(f.paraCount<=1?'；通篇未合理分段，按标准应在表达项内降等':'')+'。';
   const dComment = '修辞运用：'+(rhetNames.length?rhetNames.join('、'):'未检出明显修辞')+'；成语 '+f.idiomCount+' 个；关联/过渡词 '+f.connect+' 处。'+
     (D>=6.5?'文章有文采、有亮点，发展等级表现较好。':(D>=4.5?'个别语句有亮点，整体尚有提升空间。':'整体缺乏亮点，需要在深刻与文采上下功夫。'));
   const wComment = writingPts>0 ? {messy:'字迹潦草但可辨认。', blur:'卷面模糊、辨认困难。', unreadable:'字迹无法辨认，严重影响评阅。'}[writingOpt] : '卷面书写正常，按阅卷惯例不扣书写分。';
@@ -1018,7 +1021,7 @@ function renderSubmit(){
     '<div class="fld"><label>📏 规定字数</label><input type="number" id="in-need" value="'+(state.lastNeed||800)+'" min="300" step="50"></div>'+
     '<div class="fld"><label>🖊️ 书写情况（一般不扣分）</label><select id="in-writing"><option value="normal">正常工整 · 不扣分（默认）</option><option value="messy">字迹潦草但可辨认 · 扣2分</option><option value="blur">字迹模糊辨认困难 · 扣3分</option><option value="unreadable">字迹无法辨认 · 扣4分</option></select></div>'+
   '</div>'+
-  '<div class="note">📌 扣分规则：卷面书写与涂改<b>一般不扣分</b>，仅当字迹潦草、模糊或无法辨认时按 2–4 分扣分制处理；无题目扣 2 分；每少 50 字扣 2 分；错别字每 2 个扣 1 分（重复不累计，最多 3 分）。</div>'+
+  '<div class="note">📌 扣分规则：卷面书写与涂改<b>一般不扣分</b>，仅当字迹潦草、模糊或无法辨认时按 2–4 分扣分制处理；无题目扣 2 分；每少 50 字扣 2 分；错别字每 2 个扣 1 分（重复不累计，最多 3 分）；标点符号考察从宽——<b>最多在表达维度扣 1 分</b>，「粘贴文字」提交的作文<b>不考察标点</b>。</div>'+
   '<button class="btn" id="btn-grade">✨ 开始智能批改</button>'+
   '<div class="status" id="grade-status"></div></div>';
 
@@ -1039,6 +1042,7 @@ function renderSubmit(){
       }
       if(!all.trim()) throw new Error('未能识别出文字，请确认图片清晰、光线充足');
       state.parsed = all;
+      state.srcType = (state.subTab==='img') ? 'img' : 'file';
       st.textContent = '✅ 共处理 '+used+' 个文件，识别 '+countCJK(all)+' 字，已按顺序合并填入文本';
       state.subTab='paste'; refreshOpen(); toast('✅ 识别完成，请核对后批改');
     }catch(err){ st.textContent = '❌ '+err.message+'（图片识别需联网加载引擎，失败时可直接粘贴文字）'; }
@@ -1058,11 +1062,15 @@ function doGrade(){
   const writing = document.querySelector('#in-writing')?.value||'normal';
   state.lastStudent=name; state.lastTitle=title; state.lastPrompt=prompt; state.lastNeed=need;
   state.essay = src;
+  /* 提交来源判定：粘贴输入 → 略过标点考察；文档/图片解析 → 标点最多扣 1 分 */
+  let srcType = state.srcType || 'paste';
+  if(ta && state.parsed && ta.value.trim() !== state.parsed.trim()) srcType = 'paste'; /* 用户改动过解析文本，视为手动输入 */
+  state.srcType = srcType;
   const f = analyzeEssay(src, {title, prompt});
-  const res = scoreEssay(f, {needChars:need, writing, manualDed:0});
+  const res = scoreEssay(f, {needChars:need, writing, manualDed:0, srcType});
   const revised = buildRevised(f);
   const suggestions = buildSuggestions(f, res, {needChars:need});
-  state.result = {f, res, revised, suggestions, student:name, title:f.title, need, writing, date:todayStr(), archived:!!name};
+  state.result = {f, res, revised, suggestions, student:name, title:f.title, need, writing, date:todayStr(), archived:!!name, srcType};
   let recSaved = false;
   if(name){ saveRecord(name, f, res, {revised, suggestions}); recSaved = true; }
   refreshPreviews();
@@ -1162,7 +1170,7 @@ function recalcFromDims(f, C, E, D, manualDed, ctx){
   score = clamp(Math.round(score), B.range[0], B.range[1]);
   const need = state.result ? state.result.need : 800;
   const writing = ctx.writing||'normal';
-  const res = scoreEssay(f, {needChars:need, writing, manualDed});
+  const res = scoreEssay(f, {needChars:need, writing, manualDed, srcType:(opts.srcType!=null?opts.srcType:(state.result&&state.result.srcType))});
   res.C=C; res.E=E; res.D=D; res.band=band; res.B=B;
   const ded2 = res.ded.filter(d=>d.label!=='教师另扣');
   if(manualDed>0) ded2.push({label:'教师另扣', pts:manualDed, note:'教师人工认定的其他扣分'});
