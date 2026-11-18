@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作文批改工作台 · 莫兰迪色系</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAE6E0;
+  --ink:#43403B;
+  --ink-soft:#8B857C;
+  --pink:#C7A9A6;
+  --pink-l:#E5D6D3;
+  --mint:#A9B8A6;
+  --mint-l:#DCE2D6;
+  --butter:#D3C3A4;
+  --butter-l:#EAE1CF;
+  --lav:#A7AEC0;
+  --lav-l:#DCDFE8;
+  --peach:#C9AFA3;
+  --peach-l:#E7D9D0;
+  --pist:#C0C4AC;
+  --rose:#A5716E;
+  --green2:#7E8E7B;
+  --shadow:4px 5px 0 rgba(67,64,59,.14);
+  --sketch-radius:255px 18px 225px 18px/18px 225px 18px 255px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'ZCOOL KuaiLe','Ma Shan Zheng','KaiTi','STKaiti',cursive,serif;
+  color:var(--ink);
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(rgba(199,169,166,.30) 3px, transparent 3.5px),
+    radial-gradient(rgba(169,184,166,.30) 3px, transparent 3.5px),
+    radial-gradient(rgba(167,174,192,.26) 2.5px, transparent 3px);
+  background-size:140px 140px,180px 180px,220px 220px;
+  background-position:0 0,60px 70px,30px 140px;
+  overflow-x:hidden;
+}
+#app{max-width:1280px;margin:0 auto;padding:28px 30px 70px;}
+
+/* ===== 顶部 ===== */
+header.top{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:8px;}
+.brand h1{
+  font-family:'Ma Shan Zheng','KaiTi',cursive;
+  font-size:44px;letter-spacing:4px;color:var(--ink);
+  text-shadow:2px 2px 0 var(--pink-l);
+  transform:rotate(-1deg);
+  display:flex;align-items:center;gap:14px;
+}
+.title-ico{width:48px;height:48px;flex:none;filter:drop-shadow(1.5px 1.5px 0 var(--pink-l));}
+.brand p{color:var(--ink-soft);font-size:15px;margin-top:4px;}
+.top-badge{
+  background:var(--butter);border:2.5px dashed var(--ink);
+  border-radius:var(--sketch-radius);padding:8px 18px;font-size:14px;
+  box-shadow:var(--shadow);transform:rotate(1.5deg);
+}
+.squiggle{width:100%;height:14px;margin:6px 0 26px;}
+.squiggle path{fill:none;stroke:var(--pink);stroke-width:3;stroke-linecap:round;}
+
+/* ===== 卡片面板 ===== */
+#board{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 24px;}
+@media (max-width:980px){#board{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:640px){#board{grid-template-columns:1fr;}}
+.card{
+  position:relative;
+  border:2.6px solid var(--ink);
+  border-radius:var(--sketch-radius);
+  padding:22px 22px 18px;
+  min-height:220px;cursor:pointer;
+  box-shadow:var(--shadow);
+  transform:rotate(var(--rot,0deg)) scale(var(--s,1));
+  will-change:transform;
+  transition:box-shadow .2s;
+  user-select:none;
+}
+.card::before{ /* 和纸胶带 */
+  content:'';position:absolute;top:-12px;left:50%;
+  width:86px;height:22px;margin-left:-46px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.55) 0 4px,transparent 4px 8px),var(--tape,var(--pink));
+  border:1.6px solid rgba(67,64,59,.35);
+  transform:rotate(-3deg);border-radius:3px;opacity:.9;
+}
+.card:nth-child(odd){--rot:-0.7deg;}
+.card:nth-child(even){--rot:0.8deg;}
+.card[data-panel="submit"]{background:var(--pink-l);--tape:var(--pink);}
+.card[data-panel="report"]{background:var(--mint-l);--tape:var(--mint);}
+.card[data-panel="suggest"]{background:var(--butter-l);--tape:var(--butter);}
+.card[data-panel="revise"]{background:var(--lav-l);--tape:var(--lav);}
+.card[data-panel="profile"]{background:var(--peach-l);--tape:var(--peach);}
+.card[data-panel="export"]{background:var(--pist);--tape:#AEB8A0;}
+.card h2{
+  font-family:'Ma Shan Zheng','KaiTi',cursive;font-size:24px;letter-spacing:2px;
+  display:flex;align-items:center;gap:10px;margin-bottom:10px;
+}
+.card h2 .ico{width:34px;height:34px;flex:none;}
+.card .hint{font-size:13.5px;color:var(--ink-soft);line-height:1.75;}
+.card .stat{
+  margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.chip{
+  display:inline-block;background:#fff;border:2px solid var(--ink);
+  border-radius:14px 4px 14px 4px;padding:3px 12px;font-size:13px;
+  box-shadow:2px 2px 0 rgba(67,64,59,.12);
+}
+.chip.big{font-size:20px;padding:4px 16px;background:var(--butter);}
+.card .go{position:absolute;right:20px;bottom:14px;font-size:13px;color:var(--ink-soft);}
+.board-dimmed .card{filter:blur(2px) saturate(.7);opacity:.32;transition:filter .45s,opacity .45s;pointer-events:none;}
+
+/* ===== 背景幕 & 展开容器 ===== */
+#backdrop{
+  position:fixed;inset:0;background:rgba(67,64,59,.42);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .4s;z-index:80;
+}
+body.modal-open #backdrop{opacity:1;pointer-events:auto;}
+#expander{
+  position:fixed;z-index:90;background:#FAF7F2;
+  border:2.8px solid var(--ink);border-radius:var(--sketch-radius);
+  box-shadow:8px 10px 0 rgba(67,64,59,.18);
+  overflow:hidden;display:flex;flex-direction:column;
+  transition:left .45s cubic-bezier(.6,.05,.28,1),top .45s cubic-bezier(.6,.05,.28,1),
+             width .45s cubic-bezier(.6,.05,.28,1),height .45s cubic-bezier(.6,.05,.28,1);
+}
+.exp-body{flex:1;overflow-y:auto;padding:26px 34px 40px;}
+.exp-head{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:20px 30px 12px;border-bottom:2.5px dashed rgba(67,64,59,.35);
+}
+.exp-head h2{font-family:'Ma Shan Zheng','KaiTi',cursive;font-size:30px;letter-spacing:3px;display:flex;gap:12px;align-items:center;}
+.exp-head h2 svg{width:36px;height:36px;flex:none;}
+.close-btn{
+  font-size:14px;background:var(--pink);border:2.4px solid var(--ink);
+  border-radius:14px 5px 14px 5px;padding:7px 18px;cursor:pointer;
+  box-shadow:3px 3px 0 rgba(67,64,59,.2);font-family:inherit;color:var(--ink);
+}
+.close-btn:hover{transform:translateY(-2px);}
+/* 展开后逐层浮现 */
+.rise{opacity:0;transform:translateY(16px);animation:riseIn .5s cubic-bezier(.3,.7,.4,1) forwards;}
+@keyframes riseIn{to{opacity:1;transform:translateY(0);}}
+.closing .rise{animation:riseOut .28s ease forwards;}
+@keyframes riseOut{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(10px);}}
+
+/* ===== 通用内容元素 ===== */
+.sec{margin-bottom:26px;}
+.sec > h3{
+  font-family:'Ma Shan Zheng','KaiTi',cursive;font-size:22px;letter-spacing:2px;
+  display:inline-block;border-bottom:3px dashed var(--pink);
+  padding-bottom:4px;margin-bottom:12px;transform:rotate(-.5deg);
+}
+.sec > h3 .ico{margin-right:8px;}
+.note{
+  background:var(--butter-l);border:2px dashed var(--ink);border-radius:12px 4px 12px 4px;
+  padding:10px 14px;font-size:13.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;
+}
+.fld{margin-bottom:14px;}
+.fld label{display:block;font-size:14.5px;margin-bottom:6px;color:var(--ink);}
+.fld input[type=text],.fld input[type=number],.fld select,.fld textarea{
+  width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+  background:#fff;border:2.2px solid var(--ink);border-radius:12px 4px 12px 4px;
+  padding:9px 12px;outline:none;
+}
+.fld textarea{min-height:190px;line-height:1.8;resize:vertical;}
+.fld input:focus,.fld textarea:focus,.fld select:focus{background:#F5F1E9;box-shadow:3px 3px 0 rgba(199,169,166,.55);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+.tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.tab{
+  border:2.2px solid var(--ink);background:#fff;border-radius:14px 5px 14px 5px;
+  padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink);
+  box-shadow:2px 2px 0 rgba(67,64,59,.15);
+}
+.tab.on{background:var(--pink);font-weight:bold;}
+.btn{
+  font-family:inherit;font-size:16px;letter-spacing:2px;color:var(--ink);
+  background:linear-gradient(135deg,var(--pink),var(--peach));
+  border:2.6px solid var(--ink);border-radius:16px 6px 16px 6px;
+  padding:10px 26px;cursor:pointer;box-shadow:4px 4px 0 rgba(67,64,59,.22);
+}
+.btn:hover{transform:translateY(-2px) rotate(-.5deg);}
+.btn.small{font-size:13.5px;padding:6px 14px;letter-spacing:1px;}
+.btn.mint{background:linear-gradient(135deg,var(--mint),var(--pist));}
+.btn.lav{background:linear-gradient(135deg,var(--lav),var(--lav-l));}
+.status{margin-top:10px;font-size:13.5px;color:var(--ink-soft);min-height:20px;}
+
+/* 评分表 */
+table.score{width:100%;border-collapse:collapse;font-size:14.5px;margin-bottom:8px;}
+table.score th,table.score td{
+  border:2px solid var(--ink);padding:9px 12px;text-align:left;line-height:1.65;
+  background:#fff;vertical-align:top;
+}
+table.score th{background:var(--mint-l);font-family:'Ma Shan Zheng','KaiTi',cursive;font-size:17px;letter-spacing:2px;}
+table.score tr.band td{background:var(--lav-l);}
+table.score tr.total td{background:var(--butter-l);font-size:17px;}
+table.score td .num{font-size:22px;font-weight:bold;color:var(--rose);}
+.adjust{display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-soft);}
+.adjust input{width:64px;font-family:inherit;font-size:14px;border:2px solid var(--ink);border-radius:8px 3px 8px 3px;padding:4px 6px;background:#fff;}
+.total-hero{
+  display:flex;align-items:center;gap:20px;margin:6px 0 18px;flex-wrap:wrap;
+}
+.total-hero .score-circle{
+  width:110px;height:110px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff 0 30%,var(--pink) 31%);
+  border:3px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:4px 5px 0 rgba(67,64,59,.18);transform:rotate(-3deg);
+}
+.score-circle .v{font-size:36px;font-family:'Ma Shan Zheng',cursive;color:var(--ink);line-height:1;}
+.score-circle .m{font-size:12px;color:var(--ink-soft);}
+.total-hero .desc{font-size:15px;line-height:1.9;color:var(--ink-soft);}
+
+/* 分条列点 */
+ul.points{list-style:none;font-size:15px;line-height:1.7;}
+ul.points li{
+  position:relative;padding:7px 0 7px 34px;border-bottom:1.6px dashed rgba(67,64,59,.25);
+}
+ul.points li .dot{
+  position:absolute;left:4px;top:9px;width:20px;height:20px;border-radius:50% 45% 55% 48%;
+  border:2px solid var(--ink);background:var(--tape,var(--pink));
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+}
+ul.points li b{color:var(--rose);}
+
+/* 修改示例 */
+.diff{background:#fff;border:2.2px solid var(--ink);border-radius:12px 5px 12px 5px;padding:12px 16px;margin-bottom:12px;font-size:14.5px;line-height:1.8;}
+.diff .before{color:var(--rose);text-decoration:line-through;text-decoration-color:rgba(165,113,110,.5);}
+.diff .after{color:var(--green2);}
+.diff .tag{display:inline-block;background:var(--lav-l);border:1.8px solid var(--ink);border-radius:10px 3px 10px 3px;font-size:12px;padding:1px 9px;margin-right:8px;}
+.essay-box{
+  white-space:pre-wrap;font-size:15.5px;line-height:2.05;background:#fff;
+  border:2.4px solid var(--ink);border-radius:14px 6px 14px 6px;padding:20px 24px;
+  max-height:46vh;overflow-y:auto;
+}
+
+/* 学生档案 */
+.hist-row{
+  display:flex;align-items:center;gap:12px;background:#fff;border:2.2px solid var(--ink);
+  border-radius:12px 5px 12px 5px;padding:9px 14px;margin-bottom:9px;font-size:14px;cursor:pointer;
+  box-shadow:2px 2px 0 rgba(67,64,59,.1);flex-wrap:wrap;
+}
+.hist-row:hover{background:#F5F1E9;}
+.hist-row .t{font-weight:bold;}
+.hist-row .band{font-size:12px;background:var(--lav-l);border:1.6px solid var(--ink);border-radius:9px 3px 9px 3px;padding:1px 8px;}
+.hist-row .sc{margin-left:auto;font-size:19px;color:var(--rose);font-family:'Ma Shan Zheng',cursive;}
+.empty{
+  border:2.4px dashed rgba(67,64,59,.45);border-radius:14px 6px 14px 6px;
+  padding:26px;text-align:center;color:var(--ink-soft);font-size:14px;line-height:1.9;background:rgba(255,255,255,.5);
+}
+
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px) rotate(-1deg);
+  background:var(--mint);border:2.6px solid var(--ink);border-radius:16px 6px 16px 6px;
+  padding:11px 24px;font-size:15px;box-shadow:4px 5px 0 rgba(67,64,59,.2);
+  opacity:0;pointer-events:none;transition:all .35s;z-index:200;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0) rotate(-1deg);}
+footer{margin-top:44px;text-align:center;color:var(--ink-soft);font-size:13px;line-height:1.8;}
+.trend-svg{background:#fff;border:2.2px solid var(--ink);border-radius:12px 5px 12px 5px;padding:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <h1>
+        <svg class="title-ico" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <rect x="4" y="6" width="44" height="50" rx="5" fill="#F7F4EE" stroke="#43403B" stroke-width="2.8"/>
+          <path d="M11 17h30M11 25h30M11 33h18" stroke="#A9B8A6" stroke-width="3" stroke-linecap="round"/>
+          <path d="M12 41c9-3 12 4 20-1" stroke="#C7A9A6" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M27 49L46 29c1.5-1.5 3.9-1.6 5.4-.1l3.3 3.3c1.5 1.5 1.4 3.9-.1 5.4L34 57.6l-9.6 2.6 2.6-9.6z" fill="#D3C3A4" stroke="#43403B" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M49 31l4.4 4.4" stroke="#43403B" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="34.6" cy="47.6" r="1.8" fill="#43403B"/>
+          <path d="M25.5 58.8l-3.6 1" stroke="#A5716E" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        作文批改工作台
+      </h1>
+      <p>湖南专升本语文作文 · 满分 50 分 · 莫兰迪色系 · 每位学生都有专属记忆档案</p>
+    </div>
+    <div class="top-badge">📖 依据《湖南专升本语文作文评分标准》<br>内容 20 + 表达 20 + 发展等级 10 · 书写一般不扣分</div>
+  </header>
+  <svg class="squiggle" viewBox="0 0 1200 14" preserveAspectRatio="none"><path d="M0,8 Q25,1 50,8 T100,8 T150,8 T200,8 T250,8 T300,8 T350,8 T400,8 T450,8 T500,8 T550,8 T600,8 T650,8 T700,8 T750,8 T800,8 T850,8 T900,8 T950,8 T1000,8 T1050,8 T1100,8 T1150,8 T1200,8"/></svg>
+
+  <main id="board">
+    <section class="card" data-panel="submit">
+      <h2>
+        <svg class="ico" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect x="4" y="3" width="23" height="30" rx="4" fill="#F7F4EE" stroke="#43403B" stroke-width="2.2"/>
+          <path d="M9 11h13M9 17h13M9 23h8" stroke="#A9B8A6" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M25 32.6L33.4 24l3.4 3.4L28.4 36l-4.8 1.4 1.4-4.8z" fill="#C7A9A6" stroke="#43403B" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M36 26.6l1.8 1.8" stroke="#43403B" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        提交作文
+      </h2>
+      <p class="hint">粘贴文字、上传图片（自动识图认字）或文档（docx / txt），工作台自动提取标题与段落，一键智能批改。</p>
+      <div class="stat"><span class="chip" id="st-submit">待提交</span></div>
+      <span class="go">点击展开 →</span>
+    </section>
+    <section class="card" data-panel="report">
+      <h2>
+        <svg class="ico" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M4 35.5h32" stroke="#43403B" stroke-width="2.4" stroke-linecap="round"/>
+          <rect x="7" y="20" width="7" height="13" rx="2" fill="#A9B8A6" stroke="#43403B" stroke-width="2"/>
+          <rect x="17" y="12" width="7" height="21" rx="2" fill="#D3C3A4" stroke="#43403B" stroke-width="2"/>
+          <rect x="27" y="5" width="7" height="28" rx="2" fill="#C7A9A6" stroke="#43403B" stroke-width="2"/>
+        </svg>
+        评分报告
+      </h2>
+      <p class="hint">按评分标准分维度打分：内容、表达、发展等级 + 扣分明细，定档与基准分浮动全程透明，支持教师微调。</p>
+      <div class="stat"><span class="chip big" id="st-total">— 分</span><span class="chip" id="st-band">未批改</span></div>
+      <span class="go">点击展开 →</span>
+    </section>
+    <section class="card" data-panel="suggest">
+      <h2>
+        <svg class="ico" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M20 3a12 12 0 0 1 7 21.4c-1.6 1.2-2.5 2.4-2.8 4.1h-8.4c-.3-1.7-1.2-2.9-2.8-4.1A12 12 0 0 1 20 3z" fill="#EAE1CF" stroke="#43403B" stroke-width="2.2"/>
+          <path d="M17 19a3 3 0 1 1 6 0" stroke="#D3C3A4" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16.6 32.5h6.8M17.6 36h4.8" stroke="#43403B" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        修改建议
+      </h2>
+      <p class="hint">分条列点的针对性建议：从审题立意、结构语言到卷面习惯，每一条都给出具体可行的练习方法。</p>
+      <div class="stat"><span class="chip" id="st-suggest">待批改</span></div>
+      <span class="go">点击展开 →</span>
+    </section>
+    <section class="card" data-panel="revise">
+      <h2>
+        <svg class="ico" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M6 34L23 17" stroke="#43403B" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M23 17l4.5-4.5 4.5 4.5-4.5 4.5z" fill="#C7A9A6" stroke="#43403B" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M31 5.5v4M29 7.5h4" stroke="#A5716E" stroke-width="2" stroke-linecap="round"/>
+          <path d="M36 16.5v3M34.5 18h3" stroke="#A9B8A6" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 6.5v3M10.5 8h3" stroke="#A7AEC0" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        修改示例与修改稿
+      </h2>
+      <p class="hint">逐条对照修改示例：错别字、病句、断句一一订正，并给出修改润色后的完整作文全文。</p>
+      <div class="stat"><span class="chip" id="st-revise">待批改</span></div>
+      <span class="go">点击展开 →</span>
+    </section>
+    <section class="card" data-panel="profile">
+      <h2>
+        <svg class="ico" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M4 9a3 3 0 0 1 3-3h8l3.5 4.5H33a3 3 0 0 1 3 3V31a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9z" fill="#DCE2D6" stroke="#43403B" stroke-width="2.2"/>
+          <path d="M4 15.5h32" stroke="#43403B" stroke-width="2"/>
+          <circle cx="20" cy="24.5" r="4.6" fill="#F7F4EE" stroke="#43403B" stroke-width="2"/>
+          <path d="M20 22v5M17.5 24.5h5" stroke="#43403B" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        学生作文档案
+      </h2>
+      <p class="hint">为每位学生建立专属记忆档案：历次作文、评分与建议全部留存，自动分析写作特点与主要不足。</p>
+      <div class="stat"><span class="chip" id="st-profile">0 位学生</span></div>
+      <span class="go">点击展开 →</span>
+    </section>
+    <section class="card" data-panel="export">
+      <h2>
+        <svg class="ico" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M9 4h14l7 7v22a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" fill="#F7F4EE" stroke="#43403B" stroke-width="2.2"/>
+          <path d="M23 4v7h7" stroke="#43403B" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M16 17.5v8.5M12 22.5l4 4 4-4" stroke="#A5716E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11.5 32.5h9" stroke="#A9B8A6" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        导出批改文档
+      </h2>
+      <p class="hint">每次评分自动生成 Word 批改文档：评分表、点评、建议、修改稿一应俱全，可下载留档或打印。</p>
+      <div class="stat"><span class="chip" id="st-export">待生成</span></div>
+      <span class="go">点击展开 →</span>
+    </section>
+  </main>
+
+  <footer>
+    🌷 批改口径：卷面书写与涂改一般不扣分，仅当字迹潦草、模糊或无法辨认时按 2–4 分扣分制处理。<br>
+    机器初评仅供参考，请在「评分报告」中人工复核与微调后再入档 · 评分标准如有更新请以考试大纲为准。
+  </footer>
+</div>
+
+<div id="backdrop"></div>
+<div id="expander" style="display:none;"></div>
+<div id="toast"></div>
+
+<script>
+/* ==================================================================
+   作文批改工作台 —— 核心脚本
+   评分依据：湖南专升本语文作文评分标准（综合版·满分50分）
+   ================================================================== */
+'use strict';
+
+/* ---------- 常量与评分标准 ---------- */
+const BANDS = [
+  {name:'一档卷', range:[45,50], base:47, desc:'切合题意，中心突出，内容充实；结构严谨，语言流畅生动'},
+  {name:'二档卷', range:[39,44], base:41, desc:'符合题意，中心明确，内容充实；结构完整，语言通顺'},
+  {name:'三档卷', range:[33,38], base:35, desc:'基本符合题意，中心尚明确；结构较完整，语言基本通顺'},
+  {name:'四档卷', range:[27,32], base:29, desc:'略微偏离题意，中心不够明确；条理不够清楚，语病较多'},
+  {name:'五档卷', range:[11,26], base:16, desc:'严重偏题，中心不明确，内容空洞；结构混乱，语病多'},
+  {name:'六档卷', range:[0,10],  base:5,  desc:'文不对题或没有中心；结构残缺，文理不通，不能成篇'}
+];
+const MAMMOTH_CDN = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+const TESS_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+
+/* 常见错别字（wrong → right） */
+const TYPOS = [
+  ['迫不急待','迫不及待'],['再接再励','再接再厉'],['再接再历','再接再厉'],
+  ['一如即往','一如既往'],['甘败下风','甘拜下风'],['走头无路','走投无路'],
+  ['穿流不息','川流不息'],['谈笑风声','谈笑风生'],['世外桃园','世外桃源'],
+  ['相形见拙','相形见绌'],['按步就班','按部就班'],['情不自尽','情不自禁'],
+  ['兴高彩烈','兴高采烈'],['变本加利','变本加厉'],['出奇不意','出其不意'],
+  ['惹事生非','惹是生非'],['大名顶顶','大名鼎鼎'],['不加思索','不假思索'],
+  ['记忆尤新','记忆犹新'],['欢渡春节','欢度春节'],['张灯结采','张灯结彩'],
+  ['换然一新','焕然一新'],['一愁莫展','一筹莫展'],['破斧沉舟','破釜沉舟'],
+  ['委屈求全','委曲求全'],['鬼鬼崇崇','鬼鬼祟祟'],['迫在眉捷','迫在眉睫'],
+  ['以身作责','以身作则'],['义不容词','义不容辞'],['直接了当','直截了当'],
+  ['一股作气','一鼓作气'],['悬梁刺骨','悬梁刺股'],['别出心栽','别出心裁'],
+  ['英雄倍出','英雄辈出'],['山青水秀','山清水秀'],['心恢意冷','心灰意冷'],
+  ['芦山真面目','庐山真面目'],['相得益章','相得益彰'],['满腹经伦','满腹经纶'],
+  ['流光异彩','流光溢彩'],['饮鸩止喝','饮鸩止渴'],['精减机构','精简机构']
+];
+/* 病句模式 */
+const ILLNESS = [
+  [/通过.{1,18}[，,]?\s*使/, '“通过……使……”淹没主语，句子成分残缺，应删去“通过”或“使”'],
+  [/随着.{1,18}[，,]?\s*使/, '“随着……使……”缺少主语，应删去“使”或调整句式'],
+  [/能否.{0,25}是(关键|重要|决定|基础)/, '“能否（两面）”与后文“是一面”搭配不当，前后应一致'],
+  [/大约.{0,10}左右/, '“大约”与“左右”语义重复，二者留一即可'],
+  [/的原因(是|在于).{0,24}造成的/, '“原因是……”与“……造成的”句式杂糅，删去其一'],
+  [/防止.{0,12}不再/, '“防止……不再……”表意恰好相反，应删去“不”'],
+  [/避免.{0,12}不/, '“避免不……”双重否定表意相反，应删去“不”'],
+  [/完善.{0,4}和(建立|改进)/, '“完善”与后一动词时序颠倒，逻辑不顺'],
+  [/无数.{0,10}无数/, '“无数”重复赘余，删去一个'],
+  [/非常.{0,3}十分/, '“非常”与“十分”程度副词堆叠，删去其一']
+];
+const IDIOMS = ['坚持不懈','自强不息','厚德载物','脚踏实地','水滴石穿','百折不挠','持之以恒','锲而不舍','全神贯注','聚精会神','深思熟虑','集思广益','推陈出新','独辟蹊径','别具一格','栩栩如生','绘声绘色','淋漓尽致','一目了然','引人入胜','耐人寻味','意味深长','发人深省','振聋发聩','豁然开朗','茅塞顿开','恍然大悟','受益匪浅','感同身受','历历在目','记忆犹新','迫不及待','翘首以盼','朝夕相处','风雨同舟','同舟共济','众志成城','齐心协力','一帆风顺','锦绣前程','任重道远','披荆斩棘','勇往直前','迎难而上','乘风破浪','扬帆起航','继往开来','薪火相传','源远流长','博大精深','交相辉映','相辅相成','缺一不可','至关重要','大有裨益','举足轻重','不可估量','日新月异','突飞猛进','蒸蒸日上','欣欣向荣','硕果累累','满载而归','油然而生','肺腑之言','语重心长','谆谆教诲','言传身教','潜移默化','耳濡目染','身体力行','率先垂范','克勤克俭','艰苦奋斗','卧薪尝胆','破釜沉舟','闻鸡起舞','悬梁刺股','囊萤映雪','凿壁偷光'];
+const STOP_GRAMS = '的了着呢吗啊吧呀哦嘛么之乎其与及或并由于是从把被让向到在对于上中下里前后左右这那你我他她它们我们你们自己什么怎么可以就是不是没有已经将要可能应该如果虽然但是而且因此所以因为然而不过于是接着其实其实一个这个那个每一非常十分真的确实都也很更最又再就才只大约已经';
+/* 事实论据信号：举例引导词 + 具体专名（人物/朝代/国家/企业） */
+const FACT_SIGNALS = '例如|譬如|比如|据统计|调查显示|据报道|史料记载|传说|自古以来|回顾历史|纵观历史|历史上|翻开史册';
+const PERSONS = ['孔子','孟子','老子','庄子','墨子','荀子','韩非子','屈原','司马迁','班固','曹操','诸葛亮','陶渊明','李白','杜甫','白居易','苏轼','李清照','辛弃疾','文天祥','岳飞','陆游','王安石','范仲淹','欧阳修','蒲松龄','曹雪芹','鲁迅','胡适','朱自清','老舍','巴金','沈从文','钱钟书','杨绛','史铁生','莫言','余华','司马光','勾践','项羽','刘邦','韩信','张骞','苏武','王昭君','郑和','林则徐','谭嗣同','梁启超','秋瑾','孙中山','雷锋','焦裕禄','王进喜','钱学森','邓稼先','袁隆平','屠呦呦','钟南山','张桂梅','樊锦诗','黄文秀','南仁东','竺可桢','华罗庚','陈景润','苏炳添','谷爱凌','全红婵','爱迪生','牛顿','爱因斯坦','居里夫人','达尔文','诺贝尔','贝多芬','莫扎特','梵高','毕加索','莎士比亚','托尔斯泰','海明威','海伦·凯勒','海伦凯勒','保尔·柯察金','乔布斯','比尔·盖茨','比尔盖茨','马斯克','稻盛和夫','松下幸之助','曼德拉','甘地','哥白尼','伽利略','达·芬奇','苏格拉底','柏拉图','亚里士多德','简·爱'];
+const DYNASTIES = ['夏朝','商朝','周朝','西周','东周','秦朝','秦代','汉朝','汉代','西汉','东汉','三国','魏晋','西晋','东晋','南北朝','隋朝','隋代','唐朝','唐代','大唐','五代','宋朝','宋代','北宋','南宋','大宋','元朝','元代','明朝','明代','大明','清朝','清代','大清','晚清','民国','春秋战国','盛唐','贞观','开元','康乾'];
+const COUNTRIES = ['中国','华夏','美国','英国','法国','德国','日本','俄罗斯','苏联','韩国','朝鲜','新加坡','以色列','印度','意大利','西班牙','希腊','埃及','澳大利亚','加拿大','巴西','瑞士','瑞典','挪威','芬兰','荷兰','比利时','波兰','匈牙利','土耳其','伊朗','沙特','泰国','越南','菲律宾','马来西亚','印度尼西亚','新西兰','墨西哥','阿根廷'];
+const COMPANIES = ['华为','腾讯','阿里巴巴','支付宝','淘宝','京东','小米','字节跳动','抖音','百度','网易','格力','海尔','美的','比亚迪','宁德时代','大疆','联想','中兴','茅台','老干妈','苹果公司','苹果手机','谷歌','微软','亚马逊','脸书','特斯拉','丰田','三星','松下','索尼','诺基亚','可口可乐','肯德基','麦当劳','星巴克','宜家','无印良品'];
+/* 道理论据信号 */
+const REASON_SIGNALS = '古人云|古人说|常言道|俗话说|俗语说|谚语说|有句名言|有一句名言|名言说|正如.{0,16}所说|正所谓|所谓|曾说过|曾言|哲人说|有言|格言|启示我们|告诉我们';
+/* 书名号典籍信号：《》中的古典著作/典籍/书籍，以及常见典籍名单（用于判断是否为经史子集类典籍） */
+const CLASSICS = ['论语','孟子','大学','中庸','道德经','老子','庄子','列子','墨子','荀子','韩非子','管子','晏子春秋','吕氏春秋','淮南子','说苑','新序','法言','论衡','周易','易经','诗经','尚书','礼记','周礼','仪礼','春秋','左传','公羊传','谷梁传','孝经','尔雅','史记','汉书','后汉书','三国志','晋书','资治通鉴','贞观政要','世说新语','颜氏家训','传习录','菜根谭','围炉夜话','小窗幽记','了凡四训','曾国藩家书','傅雷家书','朱子家训','弟子规','三字经','千字文','增广贤文','格言联璧','声律启蒙','古文观止','文选','昭明文选','文心雕龙','诗品','人间词话','随园诗话','梦溪笔谈','天工开物','农政全书','本草纲目','徐霞客游记','水经注','齐民要术','考工记','理想国','沉思录','蒙田随笔','查拉图斯特拉如是说','西方哲学史','国富论','社会契约论','论法的精神'];
+const CONNECTIVES = ['然而','但是','因此','所以','首先','其次','再次','此外','不仅如此','换言之','由此可见','综上所述','总之','相反','与此同时','一方面','另一方面','进一步说','更重要的是','诚然','恰恰相反','归根结底'];
+
+/* ---------- 工具函数 ---------- */
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function countCJK(s){ return (s.match(/[\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef\u2018\u2019\u201c\u201d]/g)||[]).length; }
+function bigrams(str){
+  const t = (str||'').replace(/[^\u4e00-\u9fa5]/g,'');
+  const out = [];
+  for(let i=0;i+1<t.length;i++){
+    const b = t.substr(i,2);
+    if(STOP_GRAMS.indexOf(b[0])>=0 && STOP_GRAMS.indexOf(b[1])>=0) continue;
+    out.push(b);
+  }
+  return out;
+}
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = ()=>rej(new Error('脚本加载失败：'+src));
+    document.head.appendChild(s);
+  });
+}
+function todayStr(){
+  const d = new Date();
+  const p = n => (n<10?'0':'')+n;
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function roundHalf(v){ return Math.round(v*2)/2; }
+
+/* ---------- 全局状态 ---------- */
+const state = {
+  essay:'',            // 提交的作文原文
+  parsed:'',           // 文件解析出的原始文本
+  result:null,         // 最近一次批改结果
+  students:{},         // 学生档案 {name:{records:[...]}}
+  subTab:'paste'
+};
+
+/* ---------- 文件解析 ---------- */
+async function parseFile(file, onStatus){
+  const name = file.name.toLowerCase();
+  if(name.endsWith('.txt')||name.endsWith('.md')) return await file.text();
+  if(name.endsWith('.docx')){
+    if(!window.mammoth) await loadScript(MAMMOTH_CDN);
+    const buf = await file.arrayBuffer();
+    const r = await mammoth.extractRawText({arrayBuffer:buf});
+    return r.value;
+  }
+  if(/\.(png|jpe?g|bmp|webp)$/.test(name)){
+    if(!window.Tesseract) await loadScript(TESS_CDN);
+    const {data} = await Tesseract.recognize(file,'chi_sim',{
+      logger: m=>{ if(onStatus && m.progress!=null) onStatus('🔍 '+m.status+' '+Math.round(m.progress*100)+'%'); }
+    });
+    return data.text.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n');
+  }
+  throw new Error('暂不支持该格式，请上传 txt / docx / 图片，或直接粘贴文字');
+}
+
+/* ---------- 作文特征分析 ---------- */
+function analyzeEssay(raw, opts){
+  opts = opts || {};
+  const text = (raw||'').trim();
+  const lines = text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  let title = opts.title || '';
+  let bodyStart = 0;
+  if(!title && lines.length>1){
+    const l0 = lines[0];
+    if(l0.length<=25 && !/[。！？，、；：]$/.test(l0)){ title = l0; bodyStart = 1; }
+  }
+  const paraTexts = lines.slice(bodyStart).filter(l=>countCJK(l)>=2);
+  const body = paraTexts.join('\n');
+  const chars = countCJK(body);
+
+  /* 句子与段落 */
+  let commas=0, periods=0;
+  paraTexts.forEach(p=>{ commas += (p.match(/[，、]/g)||[]).length; periods += (p.match(/[。！？]/g)||[]).length; });
+  const sents = body.split(/[。！？]/).map(s=>s.trim()).filter(Boolean);
+  const avgLen = sents.length ? Math.round(countCJK(sents.join(''))/sents.length) : 0;
+  const runonIdx = paraTexts.map((p,i)=> (countCJK(p)>60 && (p.match(/[，、]/g)||[]).length>=6 && (p.match(/[。！？]/g)||[]).length<=1) ? i : -1).filter(i=>i>=0);
+  const runon = runonIdx.length;
+
+  /* 错别字 */
+  const typos = [];
+  TYPOS.forEach(pair=>{
+    const re = new RegExp(pair[0],'g');
+    const c = (body.match(re)||[]).length;
+    if(c>0) typos.push({wrong:pair[0], right:pair[1], count:c});
+  });
+
+  /* 标点错误 */
+  let punctErrs = 0;
+  punctErrs += (body.match(/[\u4e00-\u9fa5][,;?!]|[,;?!][\u4e00-\u9fa5]/g)||[]).length;
+  punctErrs += (body.match(/[。，！？]{2,}/g)||[]).length;
+  paraTexts.forEach(p=>{ const t=p.replace(/["”』」\s]+$/,''); const last=t.charAt(t.length-1); if(/[\u4e00-\u9fa5]/.test(last)) punctErrs++; });
+
+  /* 病句 */
+  const illness = [];
+  ILLNESS.forEach(it=>{
+    const m = body.match(it[0]);
+    if(m){ illness.push({snip:m[0], advice:it[1]}); }
+  });
+
+  /* 修辞与文采 */
+  const hasSimile = /(如同|仿佛|宛如|犹如|好像[^。]{0,20}(一样|一般)|像[^。]{1,15}一样)/.test(body);
+  let hasParallel = /有的[^。]{1,20}有的[^。]{1,20}有的/.test(body);
+  const sentHeads = {};
+  sents.slice(0,40).forEach(s=>{ const h=s.substr(0,2); if(/[\u4e00-\u9fa5]{2}/.test(h)){ sentHeads[h]=(sentHeads[h]||0)+1; if(sentHeads[h]>=3) hasParallel=true; } });
+  const hasQuote = /(“[^”]{4,32}”|「[^」]{4,32}」|古人云|常言道|俗话说|正如[^。]{1,20}所说|曾说过)/.test(body);
+  const hasQ = /(呢？|吗？|什么[^。]{0,20}？)/.test(body);
+  const hasRhetQ = /(难道|怎能|何尝|岂能|岂不是)/.test(body);
+  let idiomCount = 0;
+  IDIOMS.forEach(w=>{ if(body.indexOf(w)>=0) idiomCount++; });
+  let connect = 0;
+  CONNECTIVES.forEach(w=>{ if(body.indexOf(w)>=0) connect++; });
+
+  /* 论据识别：事实论据（举例引导词 + 人物/朝代/国家/企业专名）与道理论据（名言古语） */
+  const factSigN = (body.match(new RegExp('(?:'+FACT_SIGNALS+')','g'))||[]).length;
+  const namedList = [];
+  PERSONS.forEach(w=>{ if(body.indexOf(w)>=0) namedList.push(w); });
+  DYNASTIES.forEach(w=>{ if(body.indexOf(w)>=0) namedList.push(w); });
+  COUNTRIES.forEach(w=>{ if(body.indexOf(w)>=0) namedList.push(w); });
+  COMPANIES.forEach(w=>{ if(body.indexOf(w)>=0) namedList.push(w); });
+  const namedN = namedList.length; // 去重后的专名数量
+  const namedMention = PERSONS.concat(DYNASTIES).reduce((a,w)=>a + (body.indexOf(w)>=0 ? body.split(w).length-1 : 0), 0)
+    + COMPANIES.reduce((a,w)=>a + (body.indexOf(w)>=0 ? body.split(w).length-1 : 0), 0);
+  let reasonN = (body.match(new RegExp('(?:'+REASON_SIGNALS+')','g'))||[]).length + (hasQuote?1:0);
+  /* 书名号典籍：《》内著作/典籍/书籍按去重书名计数，计入道理论据；并统计其中经史子集类典籍 */
+  const bookMatches = body.match(/《[^》]{1,24}》/g) || [];
+  const bookList = [...new Set(bookMatches.map(s=>s.slice(1,-1).trim()).filter(Boolean))];
+  const bookN = bookList.length;
+  const classicN = bookList.filter(t=>CLASSICS.some(c=>t.indexOf(c)>=0)).length;
+  reasonN += bookN;
+  const factN = factSigN + namedN;
+  const exampleCount = factN + reasonN;
+
+  /* 结构 */
+  const openLen = paraTexts.length ? countCJK(paraTexts[0]) : 0;
+  const closeLen = paraTexts.length ? countCJK(paraTexts[paraTexts.length-1]) : 0;
+
+  /* 题意相关度 */
+  const rel = relevance(body, opts.prompt, title);
+
+  /* 标题呼应覆盖率 */
+  let cov = null;
+  if(title){
+    const grams = [...new Set(bigrams(title))].filter(g=>g.length===2 && !/^(的了)$/.test(g));
+    if(grams.length){
+      const bg = new Set(bigrams(body));
+      let hit=0; grams.forEach(g=>{ if(bg.has(g)) hit++; });
+      cov = Math.round(hit/grams.length*100);
+    }
+  }
+
+  return {
+    rawText:text, title, paras:paraTexts, paraCount:paraTexts.length, chars,
+    commas, periods, sents:sents.length, avgLen, runon, runonIdx,
+    typos, typoTerms:typos.length, typoTotal:typos.reduce((a,t)=>a+t.count,0),
+    punctErrs, illness, illnessN:illness.length,
+    rhet:{simile:hasSimile, parallel:hasParallel, quote:hasQuote, question:hasQ, rhetQ:hasRhetQ},
+    idiomCount, connect, exampleCount,
+    factN, factSigN, reasonN, namedN, namedList, namedMention,
+    bookN, bookList, classicN,
+    openLen, closeLen, rel, cov,
+    missingTitle: !title
+  };
+}
+function relevance(body, prompt, title){
+  const src = ((prompt||'')+' '+(title||'')).trim();
+  if(!src) return {level:'未提供题目要求', idx:2, note:'未填写作文题目/话题，题意判断请教师复核后微调', ratio:null};
+  let grams = [...new Set(bigrams(src))].filter(g=>g.length===2);
+  if(!grams.length) return {level:'基本符合题意', idx:2, note:'题干关键词过短，按基本符合处理，请教师复核', ratio:null};
+  const bg = new Set(bigrams(body));
+  let hit=0; grams.forEach(g=>{ if(bg.has(g)) hit++; });
+  const r = hit/grams.length;
+  const pct = Math.round(r*100)+'%';
+  if(r>=0.22) return {level:'切合题意', idx:0, note:'题眼重合率 '+pct+'（参考值）', ratio:r};
+  if(r>=0.13) return {level:'符合题意', idx:1, note:'题眼重合率 '+pct+'（参考值）', ratio:r};
+  if(r>=0.07) return {level:'基本符合题意', idx:2, note:'题眼重合率 '+pct+'（参考值）', ratio:r};
+  if(r>=0.02) return {level:'略微偏离题意', idx:3, note:'题眼重合率 '+pct+'（参考值），请重点复核审题', ratio:r};
+  return {level:'疑似严重偏题（请人工复核）', idx:4, note:'题眼重合率 '+pct+'（参考值），请重点复核审题', ratio:r};
+}
+
+/* ---------- 评分引擎（定档优先 · 就低原则 · 基准分浮动） ---------- */
+function dimBand(v, full){ // v: 得分, full: 满分20
+  const r = v/full*20;
+  if(r>=17) return 0; if(r>=15) return 1; if(r>=12) return 2; if(r>=9) return 3; if(r>=4.5) return 4; return 5;
+}
+function scoreEssay(f, opts){
+  opts = opts || {};
+  const need = opts.needChars || 800;
+  const writingOpt = opts.writing || 'normal'; // normal / messy / blur / unreadable
+
+  /* ---- 内容(20) ---- */
+  let C = 12;
+  const relAdj = [4,2,0,-5,-9][f.rel.idx] || 0;
+  C += relAdj;
+  if(f.cov!=null){ if(f.cov>=60) C+=2; else if(f.cov>=40) C+=1; else C-=2; }
+  if(f.exampleCount>=3) C+=2; else if(f.exampleCount>=1) C+=1; else C-=2;
+  if(f.factN>=1 && f.reasonN>=1) C+=0.5; // 事实论据与道理论据相结合
+  if(f.chars<600) C-=1;
+  if(!f.title && !opts.prompt) C-=1;
+  C = roundHalf(clamp(C,0,20));
+
+  /* ---- 表达(20) ---- */
+  let E = 13;
+  if(f.paraCount>=4 && f.paraCount<=7) E+=2; else if(f.paraCount>=8 && f.paraCount<=10) E+=1;
+  else if(f.paraCount>=2 && f.paraCount<=3) E-=1; else if(f.paraCount<=1) E-=5;
+  if(f.openLen<=150 && f.closeLen<=150 && f.paraCount>=3) E+=1;
+  E -= Math.min(3, f.runon);
+  E -= Math.min(3, f.illnessN*0.5);
+  if(f.avgLen>40) E-=1;
+  if(f.punctErrs>=3) E-=1;
+  E = roundHalf(clamp(E,0,20));
+
+  /* ---- 发展等级(10) ---- */
+  let D = 4;
+  const r = f.rhet;
+  const rhetHits = [r.simile,r.parallel,r.quote,(r.question||r.rhetQ)].filter(Boolean).length;
+  D += Math.min(3, rhetHits);
+  if(f.idiomCount>=6) D+=1;
+  if(f.connect>=5) D+=1;
+  if(f.chars>=750 && f.paraCount>=5) D+=1;
+  D = roundHalf(clamp(D,0,10));
+
+  /* ---- 定档（内容+表达定档，就低原则） ---- */
+  let band = dimBand(C+E, 40);
+  const bandC = dimBand(C,20), bandE = dimBand(E,20);
+  band = Math.max(band, bandC, bandE);
+  if(f.chars<600) band = Math.max(band, 3); // 不足600字原则上不得进入三档以上
+  const B = BANDS[band];
+
+  /* ---- 档内浮动 ---- */
+  let score = B.base;
+  let floatNote = '以本档基准分 '+B.base+' 分为起点';
+  if(D>=8){ score+=2; floatNote += '；发展等级突出，上浮 2 分'; }
+  else if(D>=6.5){ score+=1; floatNote += '；发展等级较好，上浮 1 分'; }
+  if(C>=17 && E>=17 && D<8){ score+=1; floatNote += '；内容表达俱佳，上浮 1 分'; }
+  if(C<10 || E<10){ score-=2; floatNote += '；存在明显短板，下调 2 分'; }
+  else if(C<12 || E<12){ score-=1; floatNote += '；略有短板，下调 1 分'; }
+  score = clamp(Math.round(score), B.range[0], B.range[1]);
+
+  /* ---- 维度归一：保证 内容+表达+发展 = 档内得分，与总分口径一致 ---- */
+  {
+    const sum0 = C+E+D;
+    if(sum0>0){
+      const C2 = roundHalf(C*score/sum0);
+      const E2 = roundHalf(E*score/sum0);
+      let D2 = roundHalf(score - C2 - E2);
+      if(D2>10){ D2=10; }
+      if(D2<0){ D2=0; }
+      if(D2===10 || D2===0){ E2 = roundHalf(clamp(score-C2-D2, 0, 20)); }
+      C = C2; E = E2; D = D2;
+    }
+  }
+
+  /* ---- 扣分项 ---- */
+  const ded = [];
+  if(f.missingTitle) ded.push({label:'无题目', pts:2, note:'要求自拟题目而未拟题，按标准扣 2 分'});
+  const deficit = need - f.chars;
+  if(deficit>0){
+    const pts = Math.floor(deficit/50)*2;
+    if(pts>0) ded.push({label:'字数不足', pts, note:'约 '+f.chars+' 字，距规定 '+need+' 字差 '+deficit+' 字，每少 50 字扣 2 分'});
+  }
+  const typoUnits = f.typoTerms + Math.floor(f.punctErrs/3);
+  if(typoUnits>=2){
+    const pts = Math.min(3, Math.floor(typoUnits/2));
+    ded.push({label:'错别字/标点', pts, note:'检出错别字 '+f.typoTerms+' 类'+(f.punctErrs>=3?('，标点问题 '+f.punctErrs+' 处（每3处计1个错别字）'):'')+'，每 2 个扣 1 分，最多扣 3 分'});
+  }
+  const writingPts = {normal:0, messy:2, blur:3, unreadable:4}[writingOpt] || 0;
+  if(writingPts>0){
+    const wnote = {messy:'字迹潦草但可辨认，扣 2 分', blur:'字迹模糊、辨认困难，扣 3 分', unreadable:'字迹无法辨认，扣 4 分'}[writingOpt];
+    ded.push({label:'卷面书写', pts:writingPts, note:wnote+'（一般不扣书写分，此项仅在无法正常认读时生效）'});
+  }
+  const manualDed = opts.manualDed||0;
+  if(manualDed>0) ded.push({label:'教师另扣', pts:manualDed, note:'教师人工认定的其他扣分'});
+  const totalDed = ded.reduce((a,d)=>a+d.pts,0);
+
+  const total = Math.max(0, score - totalDed);
+
+  /* ---- 分维度评语 ---- */
+  const rhetNames = [];
+  if(r.simile) rhetNames.push('比喻'); if(r.parallel) rhetNames.push('排比');
+  if(r.quote) rhetNames.push('引用'); if(r.question||r.rhetQ) rhetNames.push('设问/反问');
+  const cComment = '题意判断：'+f.rel.level+'。'+(f.cov!=null?('标题「'+f.title+'」关键词在正文中的呼应覆盖率约 '+f.cov+'%，'+(f.cov>=60?'中心突出':'中心尚需强化')):'')+
+    '。论据构成：事实论据 '+f.factN+' 处'+(f.namedN?('（含人物/朝代/国家/企业等具体事例 '+f.namedN+' 处，如 '+f.namedList.slice(0,3).join('、')+'）'):('（建议补充人物、时代、国家等具体事例）'))+
+    '，道理论据 '+f.reasonN+' 处'+(f.bookN?('（含《》典籍著作 '+f.bookN+' 部'+(f.classicN?('，其中经史子集类典籍 '+f.classicN+' 部，如《'+f.bookList.slice(0,3).join('》《')+'》）'):('，如《'+f.bookList.slice(0,3).join('》《')+'》）'))):(''))+((f.factN>=1&&f.reasonN>=1)?'，事实与道理相结合，论证较有层次':'（建议事实+道理论据搭配使用）')+
+    (f.exampleCount===0?'。全文缺少具体事例支撑，内容偏空':'')+
+    (f.chars<600?'；字数不足 600 字，内容单薄':'')+'。';
+  const eComment = '全文 '+f.paraCount+' 段、约 '+f.chars+' 字；'+(f.runon?('检出 '+f.runon+' 处“一逗到底”式长句；'):'')+
+    (f.illnessN?('病句 '+f.illnessN+' 处；'):'')+'句均长 '+f.avgLen+' 字'+(f.avgLen>40?'，句式偏长':'，长短结合')+
+    (f.punctErrs>=3?'；标点使用存在明显问题':'')+(f.paraCount<=1?'；通篇未合理分段，按标准应在表达项内降等':'')+'。';
+  const dComment = '修辞运用：'+(rhetNames.length?rhetNames.join('、'):'未检出明显修辞')+'；成语 '+f.idiomCount+' 个；关联/过渡词 '+f.connect+' 处。'+
+    (D>=6.5?'文章有文采、有亮点，发展等级表现较好。':(D>=4.5?'个别语句有亮点，整体尚有提升空间。':'整体缺乏亮点，需要在深刻与文采上下功夫。'));
+  const wComment = writingPts>0 ? {messy:'字迹潦草但可辨认。', blur:'卷面模糊、辨认困难。', unreadable:'字迹无法辨认，严重影响评阅。'}[writingOpt] : '卷面书写正常，按阅卷惯例不扣书写分。';
+
+  return {C,E,D,band,B,score,floatNote,ded,totalDed,total,
+    comments:{content:cComment, expression:eComment, dev:dComment, writing:wComment}};
+}
+
+/* ---------- 修改稿生成 ---------- */
+function buildRevised(f){
+  let t = f.rawText;
+  f.typos.forEach(tp=>{ t = t.split(tp.wrong).join(tp.right); });
+  /* 半角标点转全角（中文语境） */
+  t = t.replace(/([\u4e00-\u9fa5”」』])\s*,\s*/g,'$1，');
+  t = t.replace(/([\u4e00-\u9fa5”」』])\s*;\s*/g,'$1；');
+  t = t.replace(/([\u4e00-\u9fa5”」』])\s*\?\s*/g,'$1？');
+  t = t.replace(/([\u4e00-\u9fa5”」』])\s*!\s*/g,'$1！');
+  t = t.replace(/([\u4e00-\u9fa5”」』])\s*\.\s*([\u4e00-\u9fa5“「『])/g,'$1。$2');
+  /* 重复标点 */
+  t = t.replace(/([，。！？；、])\1+/g,'$1');
+  t = t.replace(/，(?=[，。])/g,'');
+  /* 长句断句：转折/因果连词前的逗号改为句号 */
+  if(f.runon>0){
+    const conds = ['因此','所以','然而','但是','后来','于是','接着','最终','终于','由此可见','换言之'];
+    f.paras.forEach((p,i)=>{
+      if(f.runonIdx.indexOf(i)<0) return;
+      let np = p;
+      conds.forEach(c=>{ np = np.replace(new RegExp('，\\s*(?='+c+')','g'), '。'); });
+      t = t.replace(p, np);
+    });
+  }
+  /* 段尾补句号 */
+  const paras = t.split(/\n+/).map(p=>{
+    const tp = p.trim();
+    if(tp && /[\u4e00-\u9fa5”』]$/.test(tp)) return tp+'。';
+    return tp;
+  });
+  return paras.filter(Boolean).join('\n\n');
+}
+
+/* ---------- 建议生成 ---------- */
+/* 比喻论证素材库：按论点关键词匹配，给出贴合题旨的喻证示例 */
+const METAPHOR_BANK = [
+  [/坚持|恒心|毅力|执着|锲而不舍/, '坚持就像扬帆远航——风平浪静时人人都会划桨，真正的航程是在逆风里依然不肯收帆；帆鼓得越满，船行得越远，逆境正是把阻力变成推力的那阵风。'],
+  [/梦想|理想|志向|目标|追求/, '梦想就像远处的灯塔——它不替你划桨，却决定了你朝哪个方向用力；没有灯塔的船，划得再快也只是在原地打转。'],
+  [/奋斗|拼搏|努力|勤奋|实干/, '奋斗就像烧一壶水——90 度的热水看着冒气，却永远翻滚不起来；坚持添上最后一把柴，水才真正沸腾，成功往往就差那“最后一度”。'],
+  [/读书|学习|阅读|知识|学问/, '读书就像熬一锅粥——火候不到，米是米、水是水；只有慢火细熬，知识才能与思想融成一体，读出的学问才有黏性与滋味。'],
+  [/合作|团结|团队|集体|同心/, '合作就像一捆筷子——一根筷子一折就断，一捆筷子却掰不开；个人的力量有限，合在一起才扛得住更重的担子。'],
+  [/创新|创造|改革|突破|求变/, '创新就像给旧屋开一扇新窗——墙还是那面墙，光却换了方向；守着老屋子的人看见的是旧影，肯开窗的人迎进来的是新风。'],
+  [/宽容|谅解|包容|气度/, '宽容就像大海收纳百川——容纳了泥沙，才成就了深；不肯容下一条小溪的洼地，永远只是一个水坑。'],
+  [/自信|信心|自强/, '自信就像船的压舱石——它不产生动力，却让你在风浪里不翻船；没有它，能力再强的水手也不敢驶向深海。'],
+  [/挫折|逆境|困难|失败|磨砺/, '挫折就像磨刀石——刀在石上磨，看似受损，实则锋利；躲开磨刀石的刀，永远只是一块铁。'],
+  [/时间|惜时|青春|光阴/, '时间就像手里的沙——攥得越紧漏得越快，摊开手掌它反而安稳停留；善用者把它铺成路，挥霍者只能看它从指缝流走。'],
+  [/诚信|守信|承诺/, '诚信就像一张存折——每守一次约就存进一笔，透支一次信用就划走一串；等到余额清零，再说“信我”也没人肯借。'],
+  [/责任|担当|使命/, '责任就像肩上的扁担——挑起来走路才稳，卸下来人反而站不直；一个人扛起多少，他的世界就有多重。'],
+  [/爱国|家国|民族/, '家国就像大树与根——枝叶再高，养分都来自深处的根系；根断了的树，风一吹便倒。'],
+  [/环保|生态|自然|绿水青山/, '生态就像一张渔网——处处相连，抽走任何一根线，网眼就会越撕越大；今天划开的每一个小口，都是明天倾覆的缺口。']
+];
+function pickMetaphor(f, opts){
+  const src = (f.title||'')+' '+(opts.prompt||'');
+  for(let i=0;i<METAPHOR_BANK.length;i++){ if(METAPHOR_BANK[i][0].test(src)) return METAPHOR_BANK[i][1]; }
+  const topic = f.title || '本文论点';
+  return '以「'+topic+'」为例：它好比种一棵树——决心是埋下的种子，方法是浇水施肥，而恒心是漫长的等待，缺了任何一环，树都长不成。请照此把中心论点放进一个具体可感的比喻里，让抽象的道理长出画面。';
+}
+function buildSuggestions(f, res, opts){
+  opts = opts || {};
+  const need = opts.needChars || 800;
+  const out = [];
+  const push = (ico, lead, body)=>out.push({ico, lead, body});
+  if(f.missingTitle) push('🏷️','拟题训练','作文要求自拟题目而本篇无题，已扣 2 分。养成“先拟题、后行文”的习惯：题目宁小勿大，可直接化用材料关键词，让题目成为全文的靶心。');
+  if(f.rel.idx>=3) push('🎯','审题立意专项','本次题意判断为「'+f.rel.level+'」。练习“三遍审题法”：第一遍圈出题干关键词，第二遍追问关键词背后的因果与价值判断，第三遍用一句话写出中心论点再动笔。');
+  else if(f.rel.idx===2) push('🎯','审题再聚焦','题意判断为「基本符合题意」，中心可再聚焦。每段开头用“段首中心句”直接回应题目关键词，让阅卷老师一眼看到你在扣题。');
+  if(need - f.chars > 0) push('📏','篇幅达标','本篇约 '+f.chars+' 字，距规定 '+need+' 字尚差 '+(need-f.chars)+' 字（每少 50 字扣 2 分）。建议按“引论—本论三段—结论”五段框架预先分配字数，每段不少于 130 字。');
+  if(f.exampleCount<2) push('📚','素材积累','论据偏少（事实论据 '+f.factN+' 处、道理论据 '+f.reasonN+' 处），内容欠充实。每周积累 2 张素材卡：事实论据卡记“人物/企业 + 事件 + 一句评论”（历史人物、时代楷模、社会热点各一），道理论据卡记 1 条名言古语或《典籍》章句（如《论语》《孟子》《史记》中的句子），考场上按“事实+道理”组合使用。');
+  else if(f.bookN===0 && (f.factN>=1 && f.reasonN>=1)) push('📖','引经据典','本篇论据类型齐备但未引用任何典籍著作。在道理论据中嵌入 1–2 处书名号典籍（如“《论语》有言……”“正如《史记》所载……”），可提升文化底蕴，在发展等级“有文采、有底蕴”上更容易拿分。');
+  else if(!(f.factN>=1 && f.reasonN>=1)) push('📚','论据搭配','本篇以'+(f.factN>=1?'事实论据':'道理论据')+'为主，缺少另一种论据呼应。议论文的理想结构是“事实论据讲透彻 + 道理论据点睛”，两者齐备论证才立体。');
+  if(f.exampleCount>=1 && !(f.factN>=1 && f.reasonN>=1)) push('🌈','增加比喻论证','本篇论据以'+(f.factN>=1?'事实论据':'道理论据')+'为主，说理偏“实”，缺一处“以虚驭实”的喻证。比喻论证能把抽象论点化作可感的画面，是最易得分的亮点句。修改示例：'+pickMetaphor(f, opts)+'（建议把此喻证放在分论点之后承接说理，或化入结尾收束段）。');
+  if(f.runon>0) push('✂️','断句与长短句','全文有 '+f.runon+' 处“一逗到底”的长句，读来气短意乱。练习“一句话一个意思”：句号后必须出现新的主语或新的判断；善用短句制造节奏感。');
+  if(f.illnessN>0) push('🩺','病句自查','检出 '+f.illnessN+' 处典型病句（详见修改示例）。记熟高频病句类型：滥用“通过/使”淹没主语、两面与一面搭配不当、“大约…左右”语义重复、句式杂糅；成文后专门用 2 分钟通读排查。');
+  if(f.typoTerms>0) push('📝','错别字清单','检出错别字 '+f.typoTerms+' 类（'+f.typos.map(t=>t.wrong+'→'+t.right).join('、')+' 等），已按每 2 个扣 1 分处理。建立“错字本”，把易错词抄成卡片，考前只复习自己错的，不抄别人的。');
+  if(f.paraCount<=1) push('🧱','分段规范','通篇一段或分段过少，按标准在表达项内降等。议论文采用“五段三分式”，开头亮观点、中间三段分论点、结尾收束升华。');
+  else if(f.openLen>150) push('🐤','凤头豹尾','开头已达 '+f.openLen+' 字，入题偏慢。练习“百字入题”：第一段不超过 100 字，用引言、设问或现象切入，第二段末必须亮出中心论点。');
+  if(res.D<5) push('🎨','语言升格','发展等级得分偏低（'+res.D+'/10），整体缺乏亮点。每周仿写 3 句：一个比喻句、一组排比句、一处名言引用；把“很关键”升级为“是解题的那把钥匙”。');
+  else if(res.D<6.5) push('🎨','亮点加密','发展等级中上（'+res.D+'/10），亮点密度可再提高。每段至少安排一处“亮句”：巧譬、警句或新鲜素材，让每个段落都有可圈可点之处。');
+  if(res.band<=2 && res.total<40) push('🪜','冲击上一档','当前定档「'+res.B.name+'」。对照上一档描述逐条自检：内容是否更充实？结构是否更严谨？语言是否有文采？每次写作前先给自己定一个“超越上次 2 分”的小目标。');
+  if(!out.length) push('🌟','保持优势','本次作文基础扎实，未发现明显硬伤。下一步可冲刺一档：打磨立意的深刻度（由“是什么”追问到“为什么”与“怎么办”），并形成个人化的语言风格。');
+  return out;
+}
+
+/* ---------- 学生档案存取 ---------- */
+function loadStudents(){
+  try{ state.students = JSON.parse(localStorage.getItem('essayWB.v1')||'{}'); }
+  catch(e){ state.students = {}; }
+}
+function saveStudents(){
+  localStorage.setItem('essayWB.v1', JSON.stringify(state.students));
+}
+function saveRecord(name, f, res, extras){
+  if(!name) return false;
+  if(!state.students[name]) state.students[name] = {records:[]};
+  const rec = {
+    id: 'r'+Date.now(), date: todayStr(), student: name,
+    title: f.title||'(无题)', chars: f.chars, paraCount: f.paraCount,
+    C:res.C, E:res.E, D:res.D, score:res.total, band:res.band, bandName:res.B.name,
+    ded:res.ded, floatNote:res.floatNote,
+    comments:res.comments, rel:{level:f.rel.level, idx:f.rel.idx, note:f.rel.note},
+    essay: f.rawText, revised: extras.revised,
+    suggestions: extras.suggestions,
+    feat: {exampleCount:f.exampleCount, factN:f.factN, reasonN:f.reasonN, namedN:f.namedN,
+      bookN:f.bookN, classicN:f.classicN,
+      idiomCount:f.idiomCount, connect:f.connect, avgLen:f.avgLen,
+      runon:f.runon, illnessN:f.illnessN, typoTerms:f.typoTerms, punctErrs:f.punctErrs,
+      simile:f.rhet.simile, parallel:f.rhet.parallel, quote:f.rhet.quote, question:(f.rhet.question||f.rhet.rhetQ),
+      cov:f.cov, openLen:f.openLen}
+  };
+  state.students[name].records.unshift(rec);
+  saveStudents();
+  if(CLOUD.on) cloudInsert(rec)
+    .then(()=>{ const b=document.getElementById('sync-badge'); if(b) setSyncBadge(true, Object.values(state.students).reduce((a,s)=>a+s.records.length,0)); })
+    .catch(()=>toast('⚠️ 云端同步失败，记录已保存在本地，下次启动自动重传'));
+  return rec;
+}
+/* 学生档案画像分析 */
+function analyzeStudent(name){
+  const s = state.students[name];
+  if(!s || !s.records.length) return null;
+  const rs = s.records;
+  const n = rs.length;
+  const scores = rs.map(r=>r.score);
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/n*10)/10;
+  const feats = {
+    chars: rs.map(r=>r.chars), paras: rs.map(r=>r.paraCount),
+    avgLen: rs.map(r=>r.feat.avgLen), examples: rs.map(r=>r.feat.exampleCount),
+    factAvg: Math.round(rs.reduce((a,r)=>a+(r.feat.factN||0),0)/n*10)/10,
+    reasonAvg: Math.round(rs.reduce((a,r)=>a+(r.feat.reasonN||0),0)/n*10)/10,
+    namedTotal: rs.reduce((a,r)=>a+(r.feat.namedN||0),0),
+    bookAvg: Math.round(rs.reduce((a,r)=>a+(r.feat.bookN||0),0)/n*10)/10,
+    classicTotal: rs.reduce((a,r)=>a+(r.feat.classicN||0),0),
+    bothCount: rs.filter(r=>(r.feat.factN||0)>0 && (r.feat.reasonN||0)>0).length,
+    idioms: rs.map(r=>r.feat.idiomCount), connect: rs.map(r=>r.feat.connect),
+    runon: rs.reduce((a,r)=>a+r.feat.runon,0), illness: rs.reduce((a,r)=>a+r.feat.illnessN,0),
+    typo: rs.reduce((a,r)=>a+r.feat.typoTerms,0), noTitle: rs.filter(r=>r.title==='(无题)').length,
+    shortCount: rs.filter(r=>r.chars<600).length,
+    simile: rs.filter(r=>r.feat.simile).length, parallel: rs.filter(r=>r.feat.parallel).length,
+    quote: rs.filter(r=>r.feat.quote).length, question: rs.filter(r=>r.feat.question).length,
+    avgC: Math.round(rs.reduce((a,r)=>a+r.C,0)/n*10)/10,
+    avgE: Math.round(rs.reduce((a,r)=>a+r.E,0)/n*10)/10,
+    avgD: Math.round(rs.reduce((a,r)=>a+r.D,0)/n*10)/10
+  };
+  /* 写作特点（分条） */
+  const traits = [];
+  const avgChars = Math.round(feats.chars.reduce((a,b)=>a+b,0)/n);
+  traits.push('篇幅习惯：平均 '+avgChars+' 字、'+Math.round(feats.paras.reduce((a,b)=>a+b,0)/n)+' 段'+(feats.shortCount===0?'，篇幅稳定达标':'（有 '+feats.shortCount+' 次不足 600 字）'));
+  const rhetList = [];
+  if(feats.simile>=1) rhetList.push('比喻'); if(feats.parallel>=1) rhetList.push('排比');
+  if(feats.quote>=1) rhetList.push('引用'); if(feats.question>=1) rhetList.push('设问反问');
+  if(rhetList.length) traits.push('修辞运用：擅用'+rhetList.join('、')+'（历次累计命中 '+rhetList.length+' 类），语言有一定表现力');
+  else traits.push('修辞运用：历次作文均未检出明显修辞，语言以平实叙述为主');
+  if(Math.round(feats.examples.reduce((a,b)=>a+b,0)/n)>=2) traits.push('素材意识：平均每次运用举例/引用 '+Math.round(feats.examples.reduce((a,b)=>a+b,0)/n)+' 处，注重以事例支撑观点');
+  else traits.push('素材意识：举例偏少（平均 '+(Math.round(feats.examples.reduce((a,b)=>a+b,0)/n*10)/10)+' 处/次），论证以说理为主、例证不足');
+  if(feats.bothCount>=1) traits.push('论据运用：'+feats.bothCount+'/'+n+' 次做到“事实论据 + 道理论据”相结合（事实均 '+feats.factAvg+' 处/次、道理均 '+feats.reasonAvg+' 处/次）'+(feats.namedTotal>=3?'，善用人物、朝代、国家、企业等具体事例':'，具体专名事例还可再丰富'));
+  else if(feats.factAvg>0 || feats.reasonAvg>0) traits.push('论据运用：论据类型较单一（事实均 '+feats.factAvg+' 处/次、道理均 '+feats.reasonAvg+' 处/次），尚未形成“事实+道理”的搭配习惯');
+  if(feats.bookAvg>=0.5) traits.push('典籍运用：平均每次引用 '+feats.bookAvg+' 部《》著作/典籍（经史子集类累计 '+feats.classicTotal+' 部），注重引经据典、文化底蕴较足');
+  else traits.push('典籍运用：历次作文均未引用书名号典籍，可尝试在道理论据中嵌入《论语》《孟子》等典籍章句提升底蕴');
+  traits.push('句式节奏：句均长 '+Math.round(feats.avgLen.reduce((a,b)=>a+b,0)/n)+' 字'+(feats.runon>0?'，偶有“一逗到底”倾向':'，长短句控制较好'));
+  if(feats.idioms>=6) traits.push('词汇积累：成语运用较丰富（累计 '+feats.idioms+' 个），书面语感较好');
+  /* 主要不足（分条，按出现频次排序） */
+  const weak = [];
+  if(feats.typo>0) weak.push({n:feats.typo, txt:'错别字反复出现（累计 '+feats.typo+' 类次），直接影响卷面与表达印象'});
+  if(feats.runon>0) weak.push({n:feats.runon, txt:'“一逗到底”式长句（累计 '+feats.runon+' 处），断句意识不足'});
+  if(feats.illness>0) weak.push({n:feats.illness, txt:'典型病句（累计 '+feats.illness+' 处），语言规范性有待提高'});
+  if(feats.shortCount>0) weak.push({n:feats.shortCount, txt:'字数不达标 '+feats.shortCount+' 次，篇幅规划能力欠缺'});
+  if(feats.noTitle>0) weak.push({n:feats.noTitle, txt:'未拟题目 '+feats.noTitle+' 次，审题流程有漏洞'});
+  if(feats.avgC<12) weak.push({n:Math.round((12-feats.avgC)*10)/10, txt:'内容维度平均仅 '+feats.avgC+'/20，事例不足、中心呼应不够'});
+  if(feats.avgD<4.5) weak.push({n:Math.round((4.5-feats.avgD)*10)/10, txt:'发展等级平均 '+feats.avgD+'/10，亮点稀疏，缺乏文采与深刻度'});
+  weak.sort((a,b)=>b.n-a.n);
+  /* 下阶段提升重点（分条） */
+  const focus = [];
+  if(feats.typo>0) focus.push('第一步（1-2 周）：建立个人错字本，每天晨读 5 分钟，本周内消灭“再/在”“的/地/得”与高频成语错字');
+  if(feats.runon>0 || feats.illness>0) focus.push('第二步（2-3 周）：每次作文后做“病句自查五分钟”，专项排查“通过…使…”“能否…”“大约…左右”三类高频病灶');
+  if(feats.examples<2 || feats.avgC<12) focus.push('第三步（3-4 周）：每周整理 2 张素材卡——事实论据卡（人物/企业 + 事件 + 一句点评）与道理论据卡（名言古语）各一，写作时强制“事实+道理”组合论证');
+  if(feats.avgD<6.5) focus.push('第四步（持续）：每周仿写亮句 3 组（比喻、排比、引用各一），段段设“一句亮点”，把文采练成肌肉记忆');
+  if(feats.avgE<14) focus.push('第五步（持续）：动笔前列“五段三分”提纲，段首写中心句，确保结构严谨、层次分明');
+  focus.push('目标：以近期均分 '+avg+' 分为起点，下阶段瞄准 '+(Math.min(50, Math.ceil((avg+3)/5)*5))+' 分（晋升上一档）');
+  /* 趋势数据 */
+  const trend = rs.slice().reverse().map((r,i)=>({i:i+1, score:r.score, date:r.date.slice(5,10)}));
+  return {n, avg, max:Math.max(...scores), min:Math.min(...scores), feats, traits, weak, focus, trend, records:rs};
+}
+
+/* ---------- 导出批改文档 ---------- */
+function buildDocHTML(rec){
+  const B = BANDS[rec.band];
+  let dedRows = (rec.ded&&rec.ded.length) ? rec.ded.map(d=>'<tr><td>'+esc(d.label)+'</td><td>-'+d.pts+'</td><td>'+esc(d.note)+'</td></tr>').join('')
+    : '<tr><td>无</td><td>-0</td><td>卷面书写正常，未触发扣分项</td></tr>';
+  const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>作文批改报告</title></head><body style="font-family:KaiTi,SimSun,serif;line-height:1.8;">'
+  +'<h1 style="text-align:center;">作文批改报告（湖南专升本 · 满分50分）</h1>'
+  +'<p style="text-align:center;">学生：'+esc(rec.student)+'　|　标题：'+esc(rec.title)+'　|　批改时间：'+esc(rec.date)+'</p>'
+  +'<h2>一、评分表</h2>'
+  +'<table border="1" cellspacing="0" cellpadding="8" style="border-collapse:collapse;width:100%;">'
+  +'<tr style="background:#DCE2D6;"><th>评分维度</th><th>满分</th><th>得分</th><th>评定依据</th></tr>'
+  +'<tr><td>内容</td><td>20</td><td><b>'+rec.C+'</b></td><td>'+esc(rec.comments.content)+'</td></tr>'
+  +'<tr><td>表达</td><td>20</td><td><b>'+rec.E+'</b></td><td>'+esc(rec.comments.expression)+'</td></tr>'
+  +'<tr><td>发展等级</td><td>10</td><td><b>'+rec.D+'</b></td><td>'+esc(rec.comments.dev)+'</td></tr>'
+  +'<tr><td>卷面书写（扣分制）</td><td>—</td><td><b>'+ (rec.ded.some(d=>d.label==='卷面书写')?('-'+rec.ded.find(d=>d.label==='卷面书写').pts):'0') +'</b></td><td>'+esc(rec.comments.writing)+'</td></tr>'
+  +'<tr><td colspan="4"><b>扣分明细</b></td></tr>'+dedRows
+  +'<tr style="background:#EAE1CF;"><td><b>定档与浮动</b></td><td colspan="3">'+B.name+'（'+B.range[0]+'–'+B.range[1]+' 分）· '+esc(rec.floatNote)+'</td></tr>'
+  +'<tr style="background:#E5D6D3;"><td><b>作文总分</b></td><td colspan="3" style="font-size:20px;"><b>'+rec.total+' / 50　（'+B.name+'）</b></td></tr>'
+  +'</table>'
+  +'<h2>二、修改建议（分条）</h2><ol>'+rec.suggestions.map(s=>'<li><b>'+esc(s.lead)+'</b>：'+esc(s.body)+'</li>').join('')+'</ol>'
+  +'<h2>三、原文</h2><p style="white-space:pre-wrap;border:1px solid #999;padding:12px;">'+esc(rec.essay)+'</p>'
+  +'<h2>四、修改后作文（参考稿）</h2><p style="white-space:pre-wrap;border:1px solid #999;padding:12px;">'+esc(rec.revised||'（未生成）')+'</p>'
+  +'<p style="color:#888;font-size:12px;">机器初评仅供参考，分数以教师复核为准。依据《湖南专升本语文作文评分标准（综合版·满分50分）》生成。</p>'
+  +'</body></html>';
+  return html;
+}
+function downloadDoc(rec){
+  const html = buildDocHTML(rec);
+  const blob = new Blob(['\ufeff'+html], {type:'application/msword'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '作文批改报告_'+rec.student+'_'+rec.date.slice(0,10)+'.doc';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  state.lastExport = rec;
+  const chip = $('#st-export'); chip.textContent = '最近导出：'+rec.student;
+  toast('📄 批改文档已生成并开始下载');
+}
+
+/* ---------- 渲染：提交面板 ---------- */
+let curOpen = null; // 当前展开面板名
+function renderSubmit(){
+  const wrap = document.createElement('div');
+  wrap.innerHTML =
+  '<div class="sec"><h3><span class="ico">📥</span>提交作文内容</h3>'+
+  '<div class="tabs">'+
+    '<button class="tab'+(state.subTab==='paste'?' on':'')+'" data-t="paste">✍️ 粘贴文字</button>'+
+    '<button class="tab'+(state.subTab==='file'?' on':'')+'" data-t="file">📄 上传文档（docx / txt）</button>'+
+    '<button class="tab'+(state.subTab==='img'?' on':'')+'" data-t="img">🖼️ 上传图片（自动识字）</button>'+
+  '</div>'+
+  (state.subTab==='paste'
+    ? '<div class="fld"><textarea id="in-essay" placeholder="在此粘贴或输入学生作文全文……（首行如为标题可自动识别）">'+esc(state.parsed||state.essay)+'</textarea></div>'
+    : '<div class="empty" style="cursor:pointer;" id="drop-zone">'+(state.subTab==='img'?'🖼️ 点击选择图片（JPG / PNG / WEBP）<br>首次使用会加载本地识别引擎，识别结果可直接在下方修正':'📄 点击选择文档（.docx / .txt）<br>自动提取全文文字')+'</div><input type="file" id="in-file" style="display:none;" accept="'+(state.subTab==='img'?'image/*':'.docx,.txt,.md')+'">'+
+      '<div class="status" id="parse-status"></div>')+
+  '</div>'+
+  '<div class="sec"><h3><span class="ico">⚙️</span>批改设置</h3>'+
+  '<div class="row2">'+
+    '<div class="fld"><label>👤 学生姓名（用于建立专属档案）</label><input type="text" id="in-student" placeholder="如：张晓雨" value="'+esc(state.lastStudent||'')+'"></div>'+
+    '<div class="fld"><label>🏷️ 作文标题（留空则自动识别首行）</label><input type="text" id="in-title" placeholder="自动识别" value="'+esc(state.lastTitle||'')+'"></div>'+
+  '</div>'+
+  '<div class="fld"><label>📖 题目 / 话题要求（用于判断是否切合题意）</label><input type="text" id="in-prompt" placeholder="如：以「坚持」为话题，写一篇不少于800字的议论文" value="'+esc(state.lastPrompt||'')+'"></div>'+
+  '<div class="row2">'+
+    '<div class="fld"><label>📏 规定字数</label><input type="number" id="in-need" value="'+(state.lastNeed||800)+'" min="300" step="50"></div>'+
+    '<div class="fld"><label>🖊️ 书写情况（一般不扣分）</label><select id="in-writing"><option value="normal">正常工整 · 不扣分（默认）</option><option value="messy">字迹潦草但可辨认 · 扣2分</option><option value="blur">字迹模糊辨认困难 · 扣3分</option><option value="unreadable">字迹无法辨认 · 扣4分</option></select></div>'+
+  '</div>'+
+  '<div class="note">📌 扣分规则：卷面书写与涂改<b>一般不扣分</b>，仅当字迹潦草、模糊或无法辨认时按 2–4 分扣分制处理；无题目扣 2 分；每少 50 字扣 2 分；错别字每 2 个扣 1 分（重复不累计，最多 3 分）。</div>'+
+  '<button class="btn" id="btn-grade">✨ 开始智能批改</button>'+
+  '<div class="status" id="grade-status"></div></div>';
+
+  wrap.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{ state.subTab=b.dataset.t; refreshOpen(); }));
+  const dz = wrap.querySelector('#drop-zone');
+  const fi = wrap.querySelector('#in-file');
+  if(dz) dz.addEventListener('click',()=>fi.click());
+  if(fi) fi.addEventListener('change', async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const st = wrap.querySelector('#parse-status');
+    st.textContent = '⏳ 正在解析 '+f.name+' …';
+    try{
+      const txt = await parseFile(f, s=>st.textContent=s);
+      state.parsed = txt;
+      st.textContent = '✅ 解析成功，共提取 '+countCJK(txt)+' 字，已填入文本（请回「粘贴文字」页核对）';
+      state.subTab='paste'; refreshOpen(); toast('✅ 文件解析完成，请核对后批改');
+    }catch(err){ st.textContent = '❌ '+err.message+'（图片识别需联网加载引擎，失败时可直接粘贴文字）'; }
+  });
+  const bg = wrap.querySelector('#btn-grade');
+  if(bg) bg.addEventListener('click', doGrade);
+  return wrap;
+}
+function doGrade(){
+  const ta = document.querySelector('#in-essay');
+  const src = ta ? ta.value.trim() : (state.parsed||state.essay);
+  if(!src || countCJK(src)<50){ toast('⚠️ 请先提交作文内容（至少 50 字）'); return; }
+  const name = (document.querySelector('#in-student')?.value||'').trim();
+  const title = (document.querySelector('#in-title')?.value||'').trim();
+  const prompt = (document.querySelector('#in-prompt')?.value||'').trim();
+  const need = parseInt(document.querySelector('#in-need')?.value,10)||800;
+  const writing = document.querySelector('#in-writing')?.value||'normal';
+  state.lastStudent=name; state.lastTitle=title; state.lastPrompt=prompt; state.lastNeed=need;
+  state.essay = src;
+  const f = analyzeEssay(src, {title, prompt});
+  const res = scoreEssay(f, {needChars:need, writing, manualDed:0});
+  const revised = buildRevised(f);
+  const suggestions = buildSuggestions(f, res, {needChars:need});
+  state.result = {f, res, revised, suggestions, student:name, title:f.title, need, writing, date:todayStr()};
+  let recSaved = false;
+  if(name){ saveRecord(name, f, res, {revised, suggestions}); recSaved = true; }
+  refreshPreviews();
+  toast(recSaved ? ('✅ 批改完成：'+res.total+' 分，已存入「'+name+'」的作文档案') : ('✅ 批改完成：'+res.total+' 分（未填姓名，未入档）'));
+  openPanel('report', document.querySelector('.card[data-panel="report"]'));
+}
+
+/* ---------- 渲染：评分报告 ---------- */
+function renderReport(rec){
+  /* rec: state.result 或档案记录，统一成视图模型 */
+  let vm;
+  if(rec && rec.f){ const f=rec.f, res=rec.res;
+    vm = {student:rec.student||'(未署名)', title:f.title||'(无题)', date:rec.date, chars:f.chars, paraCount:f.paraCount,
+      C:res.C,E:res.E,D:res.D,B:res.B,band:res.band,score:res.score,total:res.total,floatNote:res.floatNote,
+      ded:res.ded,comments:res.comments,rel:f.rel};
+  } else { vm = rec; }
+  const B = vm.B;
+  const dedRows = (vm.ded&&vm.ded.length)
+    ? vm.ded.map(d=>'<tr><td>⚠️ '+esc(d.label)+'</td><td>−'+d.pts+' 分</td><td>'+esc(d.note)+'</td></tr>').join('')
+    : '<tr><td>🎉 无扣分项</td><td>−0 分</td><td>卷面书写正常，未触发无题、字数、错别字等扣分规则</td></tr>';
+  const wrap = document.createElement('div');
+  wrap.innerHTML =
+  '<div class="sec"><div class="note">📄 学生：<b>'+esc(vm.student)+'</b> ｜ 标题：<b>'+esc(vm.title)+'</b> ｜ 约 <b>'+vm.chars+'</b> 字 · '+vm.paraCount+' 段 ｜ 批改时间：'+esc(vm.date)+'<br>📐 题意判断：'+esc(vm.rel.level)+'（'+esc(vm.rel.note||'')+'）</div>'+
+  '<div class="total-hero"><div class="score-circle"><span class="v">'+vm.total+'</span><span class="m">/ 50 分</span></div>'+
+  '<div class="desc">定档：<b style="color:#A5716E;">'+B.name+'</b>（'+B.range[0]+'–'+B.range[1]+' 分）<br>'+esc(vm.floatNote)+'<br><span style="font-size:13px;">档级描述：'+esc(B.desc)+'</span></div></div>'+
+  '<table class="score"><tr><th style="width:18%;">评分维度</th><th style="width:10%;">满分</th><th style="width:12%;">得分</th><th>评定依据 / 点评</th></tr>'+
+  '<tr><td><b>内　容</b></td><td>20</td><td><span class="num">'+vm.C+'</span></td><td>'+esc(vm.comments.content)+'</td></tr>'+
+  '<tr><td><b>表　达</b></td><td>20</td><td><span class="num">'+vm.E+'</span></td><td>'+esc(vm.comments.expression)+'</td></tr>'+
+  '<tr><td><b>发展等级</b></td><td>10</td><td><span class="num">'+vm.D+'</span></td><td>'+esc(vm.comments.dev)+'</td></tr>'+
+  '<tr><td><b>卷面书写</b></td><td>2-4 扣分制</td><td><span class="num">'+(vm.ded.some(d=>d.label==='卷面书写')?('−'+vm.ded.find(d=>d.label==='卷面书写').pts):'0')+'</span></td><td>'+esc(vm.comments.writing)+'</td></tr>'+
+  '<tr class="band"><td colspan="4"><b>扣分明细（依评分标准第四部分）</b></td></tr>'+
+  dedRows+
+  '</table>'+
+  (rec && rec.f ? '<div class="adjust">🛠️ 教师微调（改后自动重算总分）：<label>内容 <input type="number" id="adj-C" step="0.5" min="0" max="20" value="'+vm.C+'"></label><label>表达 <input type="number" id="adj-E" step="0.5" min="0" max="20" value="'+vm.E+'"></label><label>发展 <input type="number" id="adj-D" step="0.5" min="0" max="10" value="'+vm.D+'"></label><label>另扣 <input type="number" id="adj-ded" step="1" min="0" max="10" value="0"></label><button class="btn small mint" id="btn-recalc">重算</button></div>' : '')+
+  '</div>';
+  if(rec && rec.f){
+    const bc = wrap.querySelector('#btn-recalc');
+    bc.addEventListener('click', ()=>{
+      const C=parseFloat(wrap.querySelector('#adj-C').value)||0;
+      const E=parseFloat(wrap.querySelector('#adj-E').value)||0;
+      const D=parseFloat(wrap.querySelector('#adj-D').value)||0;
+      const md=parseFloat(wrap.querySelector('#adj-ded').value)||0;
+      const r2 = recalcFromDims(rec.f, C, E, D, md, rec);
+      state.result.res = r2.res; state.result.revised = r2.revised;
+      refreshPreviews(); refreshOpen(); toast('✅ 已按教师微调重算：'+r2.res.total+' 分');
+      if(state.result.student){
+        const name=state.result.student;
+        state.students[name].records[0] && null;
+        saveRecord(name, rec.f, r2.res, {revised:r2.revised, suggestions:rec.suggestions||state.result.suggestions});
+        toast('✅ 微调结果已追加存入「'+name+'」档案');
+      }
+    });
+  }
+  return wrap;
+}
+function recalcFromDims(f, C, E, D, manualDed, ctx){
+  const opts = ctx||{};
+  let band = dimBand(C+E,40);
+  band = Math.max(band, dimBand(C,20), dimBand(E,20));
+  if(f.chars<600) band = Math.max(band,3);
+  const B = BANDS[band];
+  let score = B.base;
+  if(D>=8) score+=2; else if(D>=6.5) score+=1;
+  if(C>=17&&E>=17&&D<8) score+=1;
+  if(C<10||E<10) score-=2; else if(C<12||E<12) score-=1;
+  score = clamp(Math.round(score), B.range[0], B.range[1]);
+  const need = state.result ? state.result.need : 800;
+  const writing = ctx.writing||'normal';
+  const res = scoreEssay(f, {needChars:need, writing, manualDed});
+  res.C=C; res.E=E; res.D=D; res.band=band; res.B=B;
+  const ded2 = res.ded.filter(d=>d.label!=='教师另扣');
+  if(manualDed>0) ded2.push({label:'教师另扣', pts:manualDed, note:'教师人工认定的其他扣分'});
+  res.ded = ded2;
+  res.totalDed = ded2.reduce((a,d)=>a+d.pts,0);
+  res.total = Math.max(0, Math.round(C+E+D) - res.totalDed);
+  res.comments.content = res.comments.content+'（教师微调）';
+  return {res, revised: buildRevised(f)};
+}
+
+/* ---------- 渲染：建议面板 ---------- */
+function renderSuggest(){
+  const r = state.result;
+  const wrap = document.createElement('div');
+  if(!r){
+    wrap.innerHTML = '<div class="empty">还没有批改记录 🌱<br>请先在「提交作文」中批改一篇作文，建议会自动生成在这里。</div>';
+    return wrap;
+  }
+  let focus = r.suggestions.slice(0,3).map((s,i)=>({ico:['1️⃣','2️⃣','3️⃣'][i], lead:s.lead, body:s.body}));
+  wrap.innerHTML =
+  '<div class="sec"><h3><span class="ico">💡</span>本篇修改建议（分条列点）</h3><ul class="points">'+
+  r.suggestions.map((s,i)=>'<li><span class="dot" style="--tape:'+(i%2?'var(--mint)':'var(--pink)')+'">'+(i+1)+'</span><b>'+esc(s.lead)+'</b> — '+esc(s.body)+'</li>').join('')+
+  '</ul></div>'+
+  '<div class="sec"><h3><span class="ico">🪜</span>下阶段提升重点（分条列点）</h3><ul class="points">'+
+  focus.map(s=>'<li><span class="dot" style="--tape:var(--butter)">'+s.ico+'</span><b>'+esc(s.lead)+'</b> — '+esc(s.body)+'</li>').join('')+
+  '</ul></div>'+
+  '<div class="note">以上建议由机器依据评分标准生成，请教师结合学生实际情况取舍调整。</div>';
+  return wrap;
+}
+
+/* ---------- 渲染：修改示例与修改稿 ---------- */
+function renderRevise(rec){
+  /* 优先展示当前批改；否则展示传入记录 */
+  const wrap = document.createElement('div');
+  let essay, revised, f, r;
+  if(rec && rec.f){ essay=rec.f.rawText; revised=rec.revised; f=rec.f; r=rec.res; }
+  else if(state.result){ essay=state.result.f.rawText; revised=state.result.revised; f=state.result.f; r=state.result.res; }
+  else { wrap.innerHTML='<div class="empty">暂无批改结果 🌱<br>批改一篇作文后，这里会给出逐条修改示例与完整修改稿。</div>'; return wrap; }
+
+  let diffs = '';
+  f.typos.forEach(t=>{
+    diffs += '<div class="diff"><span class="tag">错别字</span><span class="before">'+esc(t.wrong)+'</span> → <span class="after">'+esc(t.right)+'</span>　<span style="color:#999;">（出现 '+t.count+' 次）</span></div>';
+  });
+  f.illness.slice(0,3).forEach(il=>{
+    diffs += '<div class="diff"><span class="tag">病句</span>原句片段：<span class="before">…'+esc(il.snip)+'…</span><br>修改思路：<span class="after">'+esc(il.advice)+'</span></div>';
+  });
+  if(f.runon>0){
+    const p = f.paras[f.runonIdx[0]];
+    const fixed = p.replace(/，(?=(因此|所以|然而|但是|后来|于是|接着|最终|终于|由此可见|换言之))/g,'。');
+    diffs += '<div class="diff"><span class="tag">断句</span>原句：<span class="before">'+esc(p.slice(0,60))+'…</span><br>修改后：<span class="after">'+esc(fixed.slice(0,80))+'…</span>（在转折/因果连词前断句）</div>';
+  }
+  if(f.punctErrs>=3){
+    diffs += '<div class="diff"><span class="tag">标点</span>检出半角标点/重复标点共 '+f.punctErrs+' 处，修改稿已统一规范为全角标点。</div>';
+  }
+  if(!diffs) diffs = '<div class="diff">🎉 本次未检出错别字、病句与断句问题，原文语言基础扎实，修改稿仅做润色微调。</div>';
+  let openTip = '';
+  if(f.openLen>150){
+    openTip = '<div class="diff"><span class="tag">开头</span>原开头 '+f.openLen+' 字，入题偏慢。建议首段压缩到 100 字内：保留第一句引入 + 直接亮出中心论点，余下内容移入第二段展开。</div>';
+  }
+  wrap.innerHTML =
+  '<div class="sec"><h3><span class="ico">🔍</span>修改示例（逐条对照）</h3>'+openTip+diffs+'</div>'+
+  '<div class="sec"><h3><span class="ico">📖</span>修改后的完整作文</h3>'+
+  '<div class="note">说明：修改稿由工作台按检出的错别字、病句与断句问题自动订正生成，保留学生原有立意与结构，供参考誊抄；升格性润色建议见「修改建议」。</div>'+
+  '<div class="essay-box">'+esc(revised)+'</div>'+
+  '<div style="margin-top:14px;"><button class="btn lav" id="btn-copy-revise">📋 复制修改稿</button></div></div>';
+  wrap.querySelector('#btn-copy-revise').addEventListener('click',()=>{
+    navigator.clipboard.writeText(revised).then(()=>toast('📋 修改稿已复制'),()=>toast('复制失败，请手动选择文本'));
+  });
+  return wrap;
+}
+
+/* ---------- 渲染：学生档案 ---------- */
+function renderProfile(){
+  const names = Object.keys(state.students);
+  const wrap = document.createElement('div');
+  if(!names.length){
+    wrap.innerHTML = '<div class="empty">🗂️ 档案室还空着 🌱<br>在「提交作文」中填写学生姓名后批改，即自动建立专属作文记忆档案。</div>';
+    return wrap;
+  }
+  let sel = state.lastProfileName && state.students[state.lastProfileName] ? state.lastProfileName : names[0];
+  wrap.innerHTML =
+  '<div class="sec"><h3><span class="ico">👤</span>选择学生</h3>'+
+  '<div class="tabs" id="stu-tabs">'+names.map(n=>'<button class="tab'+(n===sel?' on':'')+'" data-n="'+esc(n)+'">'+esc(n)+'（'+state.students[n].records.length+' 篇）</button>').join('')+'</div></div>'+
+  '<div id="profile-detail"></div>';
+  const detail = wrap.querySelector('#profile-detail');
+  const drawDetail = ()=>{
+    const a = analyzeStudent(sel);
+    if(!a){ detail.innerHTML='<div class="empty">暂无记录</div>'; return; }
+    const pts = a.trend.map(t=>(30+t.i*((260-60)/Math.max(1,a.trend.length-1)))+','+(62 - t.score/50*52)).join(' ');
+    detail.innerHTML =
+    '<div class="sec"><h3><span class="ico">📈</span>整体表现</h3>'+
+    '<div class="stat" style="margin-bottom:12px;">'+
+      '<span class="chip">批改 <b>'+a.n+'</b> 篇</span><span class="chip big">平均 '+a.avg+' 分</span>'+
+      '<span class="chip">最高 '+a.max+'</span><span class="chip">最低 '+a.min+'</span>'+
+    '</div>'+
+    (a.trend.length>1 ? '<svg class="trend-svg" width="290" height="86" viewBox="0 0 290 86"><polyline fill="none" stroke="#B28E8B" stroke-width="3" stroke-linecap="round" points="'+pts+'"/><text x="8" y="16" font-size="11" fill="#8B857C">分数趋势（0–50）</text></svg>' : '<div class="note">已有 1 次批改记录，再批改一篇即可生成趋势图。</div>')+
+    '</div>'+
+    '<div class="sec"><h3><span class="ico">🌟</span>写作特点（分条）</h3><ul class="points">'+
+      a.traits.map((t,i)=>'<li><span class="dot" style="--tape:var(--mint)">'+(i+1)+'</span>'+esc(t)+'</li>').join('')+'</ul></div>'+
+    '<div class="sec"><h3><span class="ico">🩹</span>主要不足（分条，按频次排序）</h3>'+
+    (a.weak.length? '<ul class="points">'+a.weak.map((w,i)=>'<li><span class="dot" style="--tape:var(--pink)">'+(i+1)+'</span>'+esc(w.txt)+'</li>').join('')+'</ul>' : '<div class="note">历次作文未检出明显共性不足，继续保持！</div>')+'</div>'+
+    '<div class="sec"><h3><span class="ico">🪜</span>下阶段提升重点（分条）</h3><ul class="points">'+
+      a.focus.map((t,i)=>'<li><span class="dot" style="--tape:var(--butter)">'+(i+1)+'</span>'+esc(t)+'</li>').join('')+'</ul></div>'+
+    '<div class="sec"><h3><span class="ico">🗃️</span>历次作文记忆</h3>'+
+    a.records.map(rec=>'<div class="hist-row" data-id="'+rec.id+'"><span class="t">'+esc(rec.title)+'</span><span class="band">'+rec.bandName+'</span><span style="color:#999;">'+esc(rec.date)+' · '+rec.chars+'字</span><span class="sc">'+rec.score+'分</span><button class="btn small" data-exp="'+rec.id+'">📄 导出</button><button class="btn small" data-edit="'+rec.id+'">✏️ 编辑</button><button class="btn small" data-del="'+rec.id+'">🗑️</button></div>').join('')+
+    '</div>';
+    detail.querySelectorAll('.hist-row').forEach(row=>{
+      row.addEventListener('click', ev=>{
+        const cur = state.students[sel];
+        if(ev.target.dataset.del){
+          const rec = cur.records.find(x=>x.id===ev.target.dataset.del);
+          if(rec && confirm('确定删除《'+rec.title+'》（'+rec.date+'，'+rec.score+' 分）这条批改记录吗？\n此操作会同步删除云端数据库中的该记录，不可恢复。')){
+            cur.records = cur.records.filter(x=>x.id!==rec.id);
+            if(!cur.records.length) delete state.students[sel];
+            saveStudents();
+            if(CLOUD.on) cloudDelete(rec.id).then(()=>setSyncBadge(true)).catch(()=>toast('⚠️ 云端删除失败，本地已删除，云端将在重新迁移时清理'));
+            drawDetail();
+            refreshPreviews();
+          }
+          return;
+        }
+        if(ev.target.dataset.edit){
+          const rec = cur.records.find(x=>x.id===ev.target.dataset.edit);
+          if(rec){
+            const nt = prompt('编辑记录信息：修改作文标题（留空则取消）', rec.title);
+            if(nt!==null && nt.trim() && nt!==rec.title){
+              rec.title = nt.trim();
+              saveStudents();
+              if(CLOUD.on) cloudUpdate(rec.id, rec).catch(()=>toast('⚠️ 云端更新失败，修改已存本地'));
+              drawDetail();
+            }
+          }
+          return;
+        }
+        if(ev.target.dataset.exp){
+          const rec = cur.records.find(x=>x.id===ev.target.dataset.exp);
+          if(rec) downloadDoc(rec);
+          return;
+        }
+        const rec = cur.records.find(x=>x.id===row.dataset.id);
+        if(rec) openRecord(rec, sel);
+      });
+    });
+  };
+  wrap.querySelectorAll('#stu-tabs .tab').forEach(b=>b.addEventListener('click',()=>{
+    sel=b.dataset.n; state.lastProfileName=sel;
+    wrap.querySelectorAll('#stu-tabs .tab').forEach(x=>x.classList.toggle('on', x.dataset.n===sel));
+    drawDetail();
+  }));
+  drawDetail();
+  return wrap;
+}
+function openRecord(rec, student){
+  rec.student = student;
+  const f = analyzeEssay(rec.essay, {title: rec.title==='(无题)'?'':rec.title, prompt: state.lastPrompt||''});
+  const vm = {student, title:rec.title, date:rec.date, chars:rec.chars, paraCount:rec.paraCount,
+    C:rec.C,E:rec.E,D:rec.D,B:BANDS[rec.band],band:rec.band,score:rec.score,total:rec.score,
+    floatNote:rec.floatNote,ded:rec.ded,comments:rec.comments,rel:rec.rel};
+  /* 记录视图：报告 + 原文 + 修改稿 */
+  const reportEl = renderReport(vm);
+  const wrap = document.createElement('div');
+  wrap.appendChild(reportEl);
+  const secE = document.createElement('div'); secE.className='sec';
+  secE.innerHTML = '<h3><span class="ico">📖</span>修改后作文</h3><div class="essay-box">'+esc(rec.revised||'')+'</div>';
+  wrap.appendChild(secE);
+  const secS = document.createElement('div'); secS.className='sec';
+  secS.innerHTML = '<h3><span class="ico">💡</span>当次建议</h3><ul class="points">'+rec.suggestions.map((s,i)=>'<li><span class="dot">'+(i+1)+'</span><b>'+esc(s.lead)+'</b> — '+esc(s.body)+'</li>').join('')+'</ul>';
+  wrap.appendChild(secS);
+  const secBtn = document.createElement('div'); secBtn.className='sec';
+  secBtn.innerHTML = '<button class="btn" id="btn-exp-rec">📄 导出该次批改文档</button>';
+  secBtn.querySelector('#btn-exp-rec').addEventListener('click',()=>downloadDoc(rec));
+  wrap.appendChild(secBtn);
+  showExpanded(wrap, '🗃️ 历史批改记录', null);
+}
+
+/* ---------- 渲染：导出面板 ---------- */
+function renderExport(){
+  const wrap = document.createElement('div');
+  let body;
+  if(state.result){
+    const r = state.result;
+    body = '<div class="sec"><h3><span class="ico">📤</span>导出本次批改文档</h3>'+
+    '<div class="note">本次批改：<b>'+esc(r.student||'(未署名)')+'</b> 《'+esc(r.title||'无题')+'》 总分 <b>'+r.res.total+' 分</b>（'+r.res.B.name+'）· '+esc(r.date)+'</div>'+
+    '<div class="stat"><button class="btn" id="btn-exp-cur">📄 下载批改文档（.doc）</button><button class="btn small lav" id="btn-print">🖨️ 打印本报告</button></div>'+
+    '<div class="note">文档内含：评分表（四维度+扣分明细+定档浮动）、分条修改建议、原文与修改后全文。Word 可直接打开编辑。</div></div>';
+  } else {
+    body = '<div class="sec"><h3><span class="ico">📤</span>导出批改文档</h3><div class="empty">暂无本次批改结果 🌱<br>批改作文后可一键生成 Word 批改文档；历史批改可在「学生作文档案」中按次导出。</div></div>';
+  }
+  const names = Object.keys(state.students);
+  if(names.length){
+    body += '<div class="sec"><h3><span class="ico">📚</span>档案总览</h3>'+names.map(n=>{
+      const recs = state.students[n].records;
+      const avg = Math.round(recs.reduce((a,r)=>a+r.score,0)/recs.length*10)/10;
+      return '<div class="hist-row" data-n="'+esc(n)+'"><span class="t">'+esc(n)+'</span><span class="band">'+recs.length+' 篇</span><span style="color:#999;">平均 '+avg+' 分 · 最近 '+esc(recs[0].date)+'</span><span class="sc">'+recs[0].score+'分</span></div>';
+    }).join('')+'<div class="note">点击学生行可在「学生作文档案」中查看并按次导出批改文档。</div></div>';
+  }
+  wrap.innerHTML = body;
+  const bc = wrap.querySelector('#btn-exp-cur');
+  if(bc) bc.addEventListener('click', ()=>{
+    const r = state.result;
+    const rec = {student:r.student||'(未署名)', title:r.title||'(无题)', date:r.date, chars:r.f.chars,
+      C:r.res.C,E:r.res.E,D:r.res.D, band:r.res.band, ded:r.res.ded, floatNote:r.res.floatNote,
+      comments:r.res.comments, suggestions:r.suggestions, essay:r.f.rawText, revised:r.revised};
+    downloadDoc(rec);
+  });
+  const bp = wrap.querySelector('#btn-print');
+  if(bp) bp.addEventListener('click', ()=>window.print());
+  wrap.querySelectorAll('.hist-row[data-n]').forEach(row=>row.addEventListener('click',()=>{
+    state.lastProfileName=row.dataset.n; openPanel('profile', document.querySelector('.card[data-panel="profile"]'));
+  }));
+  return wrap;
+}
+
+/* ---------- 预览角标刷新 ---------- */
+function refreshPreviews(){
+  const st = $('#st-submit');
+  if(state.essay||state.parsed) st.textContent = '已提交 '+countCJK(state.essay||state.parsed)+' 字';
+  const r = state.result;
+  if(r){
+    $('#st-total').textContent = r.res.total+' 分';
+    $('#st-band').textContent = r.res.B.name;
+    $('#st-suggest').textContent = r.suggestions.length+' 条建议';
+    $('#st-revise').textContent = '修改稿已生成';
+  }
+  const n = Object.keys(state.students).length;
+  const total = Object.values(state.students).reduce((a,s)=>a+s.records.length,0);
+  $('#st-profile').textContent = n+' 位学生 · '+total+' 篇';
+}
+
+/* ---------- 面板展开（FLIP 卡片空间展开交互） ---------- */
+/* 板块图标（与卡片一致的手绘线性 SVG） */
+const ICONS = {
+  submit:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="4" y="3" width="23" height="30" rx="4" fill="#F7F4EE" stroke="#43403B" stroke-width="2.2"/><path d="M9 11h13M9 17h13M9 23h8" stroke="#A9B8A6" stroke-width="2.2" stroke-linecap="round"/><path d="M25 32.6L33.4 24l3.4 3.4L28.4 36l-4.8 1.4 1.4-4.8z" fill="#C7A9A6" stroke="#43403B" stroke-width="2" stroke-linejoin="round"/><path d="M36 26.6l1.8 1.8" stroke="#43403B" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  report:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M4 35.5h32" stroke="#43403B" stroke-width="2.4" stroke-linecap="round"/><rect x="7" y="20" width="7" height="13" rx="2" fill="#A9B8A6" stroke="#43403B" stroke-width="2"/><rect x="17" y="12" width="7" height="21" rx="2" fill="#D3C3A4" stroke="#43403B" stroke-width="2"/><rect x="27" y="5" width="7" height="28" rx="2" fill="#C7A9A6" stroke="#43403B" stroke-width="2"/></svg>',
+  suggest:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 3a12 12 0 0 1 7 21.4c-1.6 1.2-2.5 2.4-2.8 4.1h-8.4c-.3-1.7-1.2-2.9-2.8-4.1A12 12 0 0 1 20 3z" fill="#EAE1CF" stroke="#43403B" stroke-width="2.2"/><path d="M17 19a3 3 0 1 1 6 0" stroke="#D3C3A4" stroke-width="2" stroke-linecap="round"/><path d="M16.6 32.5h6.8M17.6 36h4.8" stroke="#43403B" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  revise:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 34L23 17" stroke="#43403B" stroke-width="2.6" stroke-linecap="round"/><path d="M23 17l4.5-4.5 4.5 4.5-4.5 4.5z" fill="#C7A9A6" stroke="#43403B" stroke-width="2" stroke-linejoin="round"/><path d="M31 5.5v4M29 7.5h4" stroke="#A5716E" stroke-width="2" stroke-linecap="round"/><path d="M36 16.5v3M34.5 18h3" stroke="#A9B8A6" stroke-width="2" stroke-linecap="round"/><path d="M12 6.5v3M10.5 8h3" stroke="#A7AEC0" stroke-width="2" stroke-linecap="round"/></svg>',
+  profile:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M4 9a3 3 0 0 1 3-3h8l3.5 4.5H33a3 3 0 0 1 3 3V31a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9z" fill="#DCE2D6" stroke="#43403B" stroke-width="2.2"/><path d="M4 15.5h32" stroke="#43403B" stroke-width="2"/><circle cx="20" cy="24.5" r="4.6" fill="#F7F4EE" stroke="#43403B" stroke-width="2"/><path d="M20 22v5M17.5 24.5h5" stroke="#43403B" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  export:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M9 4h14l7 7v22a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" fill="#F7F4EE" stroke="#43403B" stroke-width="2.2"/><path d="M23 4v7h7" stroke="#43403B" stroke-width="2" stroke-linejoin="round"/><path d="M16 17.5v8.5M12 22.5l4 4 4-4" stroke="#A5716E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.5 32.5h9" stroke="#A9B8A6" stroke-width="2.2" stroke-linecap="round"/></svg>'
+};
+const PANEL_TITLES = {
+  submit:[ICONS.submit,'提交作文'], report:[ICONS.report,'评分报告'], suggest:[ICONS.suggest,'修改建议'],
+  revise:[ICONS.revise,'修改示例与修改稿'], profile:[ICONS.profile,'学生作文档案'], export:[ICONS.export,'导出批改文档']
+};
+let expanderRect = null;
+function refreshOpen(){ if(curOpen){ const card=document.querySelector('.card[data-panel="'+curOpen+'"]'); if(card) openPanel(curOpen, card, true); } }
+function openPanel(name, card, instant){
+  curOpen = name;
+  const [ico, title] = PANEL_TITLES[name];
+  let content;
+  if(name==='submit') content = renderSubmit();
+  else if(name==='report') content = state.result ? renderReport(state.result) : (()=>{const d=document.createElement('div');d.innerHTML='<div class="empty">尚未批改 🌱<br>请先在「提交作文」中完成批改，评分表会出现在这里。</div>';return d;})();
+  else if(name==='suggest') content = renderSuggest();
+  else if(name==='revise') content = renderRevise();
+  else if(name==='profile') content = renderProfile();
+  else content = renderExport();
+  showExpanded(content, title, ico);
+  if(!instant) {} // FLIP 由 showExpanded 处理
+}
+function showExpanded(contentEl, title, ico){
+  const exp = $('#expander');
+  exp.style.display='flex';
+  exp.innerHTML =
+    '<div class="exp-head"><h2><span>'+(ico||'📌')+'</span>'+esc(title)+'</h2><button class="close-btn" id="btn-close">✕ 收起 ✕</button></div>'+
+    '<div class="exp-body"></div>';
+  const body = exp.querySelector('.exp-body');
+  body.appendChild(contentEl);
+  /* 逐层浮现 */
+  [...body.querySelectorAll('.sec, .note, .empty, .tabs, .fld, .btn, .total-hero, table.score, .adjust, .hist-row, .essay-box')].forEach((n,i)=>{
+    n.classList.add('rise'); n.style.animationDelay = Math.min(i*70, 700)+'ms';
+  });
+  exp.querySelector('#btn-close').addEventListener('click', closeExpanded);
+  document.body.classList.add('modal-open');
+  exp._open = true;
+}
+function openFromCard(card){
+  const name = card.dataset.panel;
+  const rect = card.getBoundingClientRect();
+  const exp = $('#expander');
+  /* 从卡片原位置开始 */
+  exp.style.transition = 'none';
+  exp.style.left = rect.left+'px'; exp.style.top = rect.top+'px';
+  exp.style.width = rect.width+'px'; exp.style.height = rect.height+'px';
+  exp.style.opacity = '0.94';
+  openPanel(name, card);
+  /* 强制回流后展开到完整板块 */
+  void exp.offsetHeight;
+  exp.style.transition = '';
+  requestAnimationFrame(()=>{
+    exp.style.left = '4vw'; exp.style.top = '6vh';
+    exp.style.width = '92vw'; exp.style.height = '88vh';
+    exp.style.opacity = '1';
+  });
+}
+function closeExpanded(){
+  const exp = $('#expander');
+  exp.classList.add('closing');
+  exp.querySelectorAll('.rise').forEach(n=>{ n.style.animationDelay='0ms'; });
+  /* 若是从卡片展开的，沿原路径收回 */
+  if(exp.style.left && exp.style.width && parseFloat(exp.style.width) > 10){
+    /* 找回来源卡片位置，保证空间连续性 */
+    let target = null;
+    if(curOpen){ target = document.querySelector('.card[data-panel="'+curOpen+'"]'); }
+    if(target){
+      const rect = target.getBoundingClientRect();
+      setTimeout(()=>{
+        exp.style.left = rect.left+'px'; exp.style.top = rect.top+'px';
+        exp.style.width = rect.width+'px'; exp.style.height = rect.height+'px';
+        exp.style.opacity = '0';
+      }, 120);
+    }
+  }
+  setTimeout(()=>{
+    document.body.classList.remove('modal-open');
+    exp.classList.remove('closing');
+    exp.style.display='none'; exp.innerHTML='';
+    curOpen = null;
+  }, 600);
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && curOpen) closeExpanded(); });
+$('#backdrop').addEventListener('click', ()=>{ if(curOpen) closeExpanded(); });
+document.querySelectorAll('.card').forEach(card=>{
+  card.addEventListener('click', ()=> openFromCard(card));
+});
+
+/* ---------- 卡片随鼠标呼吸缩放（0.84 – 1.0） ---------- */
+let mx=-9999, my=-9999;
+document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
+function breatheLoop(t){
+  if(!document.body.classList.contains('modal-open')){
+    document.querySelectorAll('.card').forEach((card,i)=>{
+      const r = card.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const d = Math.hypot(mx-cx, my-cy);
+      const near = clamp(1 - d/420, 0, 1);           // 距离越近越放大
+      const breathe = Math.sin(t/850 + i*1.3)*0.018;  // 轻微呼吸起伏
+      const s = 0.84 + 0.16*(near*near*(3-2*near)) + breathe*near;
+      card.style.setProperty('--s', clamp(s, 0.84, 1.0).toFixed(4));
+    });
+  }
+  requestAnimationFrame(breatheLoop);
+}
+requestAnimationFrame(breatheLoop);
+
+/* ---------- 云端数据库（Supabase PostgREST，云端为准，localStorage 仅作缓存/降级） ---------- */
+const CLOUD = {
+  url: 'https://mpjdsozlxwoszbvfbcst.supabase.co/rest/v1',
+  key: 'sb_publishable_yDr9YR26PHgBxeRkzy8rqQ_DUdUgml-',
+  on: false
+};
+function cloudHeaders(extra){
+  return Object.assign({
+    'apikey': CLOUD.key,
+    'Authorization': 'Bearer '+CLOUD.key,
+    'Content-Type': 'application/json'
+  }, extra||{});
+}
+function setSyncBadge(on, n){
+  const b = document.getElementById('sync-badge');
+  if(!b) return;
+  if(on){ b.textContent='☁️ 云端已同步'+(n?' · '+n+' 条记录':''); b.classList.add('on'); }
+  else { b.textContent='📴 云端未连接 · 仅本地模式'; b.classList.remove('on'); }
+}
+function cloudPull(){
+  return fetch(CLOUD.url+'/records?select=id,student,data&order=id.desc&limit=5000', {headers: cloudHeaders()})
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
+function cloudInsert(rec){
+  return fetch(CLOUD.url+'/records', {
+    method:'POST', headers: cloudHeaders({'Prefer':'return=minimal'}),
+    body: JSON.stringify([{id:rec.id, student:rec.student||'', data:rec}])
+  }).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); });
+}
+function cloudDelete(id){
+  return fetch(CLOUD.url+'/records?id=eq.'+encodeURIComponent(id), {method:'DELETE', headers: cloudHeaders({'Prefer':'return=minimal'})})
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); });
+}
+function cloudUpdate(id, rec){
+  return fetch(CLOUD.url+'/records?id=eq.'+encodeURIComponent(id), {
+    method:'PATCH', headers: cloudHeaders({'Prefer':'return=minimal'}),
+    body: JSON.stringify({student:rec.student||'', data:rec})
+  }).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); });
+}
+function rebuildFromRows(rows){
+  const st = {};
+  rows.forEach(row=>{
+    const rec = row.data; if(!rec || !rec.id) return;
+    const name = row.student || rec.student || '未命名';
+    if(!st[name]) st[name] = {records:[]};
+    st[name].records.push(rec);
+  });
+  Object.values(st).forEach(s=>s.records.sort((a,b)=>(b.id||'').localeCompare(a.id||'')));
+  return st;
+}
+async function cloudBoot(){
+  try{
+    const rows = await cloudPull();
+    CLOUD.on = true;
+    /* 迁移：本地有而云端没有的记录自动上传云端 */
+    const ids = new Set(rows.map(r=>r.id));
+    const locals = [];
+    Object.values(state.students).forEach(s=>s.records.forEach(r=>{ if(!ids.has(r.id)) locals.push(r); }));
+    for(const r of locals){ try{ await cloudInsert(r); ids.add(r.id); }catch(e){} }
+    const all = await cloudPull();
+    state.students = rebuildFromRows(all);
+    saveStudents();
+    setSyncBadge(true, all.length);
+    refreshPreviews();
+    toast(locals.length? ('☁️ 已连接云端数据库，本地 '+locals.length+' 条历史记录已迁移上云') : '☁️ 已连接云端数据库');
+  }catch(e){
+    CLOUD.on = false;
+    setSyncBadge(false);
+    toast('📴 云端暂不可用，本次为本地模式（'+e.message+'）');
+  }
+}
+
+/* ---------- 启动 ---------- */
+loadStudents();
+refreshPreviews();
+cloudBoot();
+</script>
+</body>
+</html>
