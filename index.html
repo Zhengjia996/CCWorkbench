@@ -762,6 +762,8 @@ function scoreEssay(f, opts){
   if(r.quote) rhetNames.push('引用'); if(r.question||r.rhetQ) rhetNames.push('设问/反问');
   const cComment = '题意判断：'+f.rel.level+'。'+(f.cov!=null?('标题「'+f.title+'」关键词在正文中的呼应覆盖率约 '+f.cov+'%，'+(f.cov>=60?'中心突出':'中心尚需强化')):'')+
     '。论据构成：事实论据 '+f.factN+' 处'+(f.namedN?('（含人物/朝代/国家/企业等具体事例 '+f.namedN+' 处，如 '+f.namedList.slice(0,3).join('、')+'）'):('（建议补充人物、时代、国家等具体事例）'))+
+    ((f.onlineHits&&f.onlineHits.length)?'；🌐 联网比对确认「'+f.onlineHits.join('、')+'」为网上常见名人，已计入事实论据':'')+
+    ((f.onlineChecked&&f.onlineChecked.length&&!f.onlineHits.length)?'；🌐 联网比对 '+f.onlineChecked.join('、')+' 未达名人判定，未计入':'')+
     '，道理论据 '+f.reasonN+' 处'+(f.bookN?('（含《》典籍著作 '+f.bookN+' 部'+(f.classicN?('，其中经史子集类典籍 '+f.classicN+' 部，如《'+f.bookList.slice(0,3).join('》《')+'》）'):('，如《'+f.bookList.slice(0,3).join('》《')+'》）'))):(''))+((f.factN>=1&&f.reasonN>=1)?'，事实与道理相结合，论证较有层次':'（建议事实+道理论据搭配使用）')+
     (f.exampleCount===0?'。全文缺少具体事例支撑，内容偏空':'')+
     (f.chars<600?'；字数不足 600 字，内容单薄':'')+'。';
@@ -973,6 +975,88 @@ function buildArgDemos(f){
   return demos;
 }
 
+/* ---------- 联网名人比对 ---------- */
+/* 规则（用户指定）：网上常出现的人物名称即属名人，在作文中出现即计为事实论据。
+   技术路径：百度搜索联想接口 sugrec（大陆直连、支持 JSONP，浏览器可原生跨域），
+   联想词非空且达阈值 → 判定为网上常出现之名人；结果缓存到 localStorage。 */
+const SURNAME_STR = '王李张刘陈杨黄赵吴周徐孙马朱胡郭何林高罗郑梁谢宋唐许韩冯邓曹彭曾肖田董袁潘蒋蔡余杜叶程苏魏吕丁任沈姚卢姜崔钟谭陆汪范金石廖贾夏韦付方白邹孟熊秦邱江尹薛闫段雷侯龙史陶黎贺顾毛郝龚邵万钱严覃武戴莫孔向汤';
+const NAME_TAIL_STOP = '的地了着是在和与或而把被让使从向到于对为之其也亦等们他她它说你我否过';
+const SPEECH_TAIL = '说言云道';
+const NAME_WORD_STOP = ['我们','自己','大家','他们','她们','它们','什么','怎么','所以','因此','但是','如果','虽然','然而','而且','因为','这样','那样','其中','其次','另外','此外','于是','然后','终于','已经','曾经','正在','将会','可以','能够','应该','必须','如今','当下','古代','现代','中国','中华','国家','社会','时代','世界','人生','生活','成长','成功','努力','坚持','理想','勇气','自信','自强','创新','责任','担当','奉献','诚信','宽容','知识','学习','读书','未来','现在','过去','之前','之后','以上','以下','如此','而是','更是','为人','以为','后人','吾辈','我辈','吾侪','青年','少年','古人','先人','智者','强者','弱者','行者','作者','读者','曾记否','曾记','曾坦言','曾坦','向他','向她','之流','彼此','据说','传说','何况','况且'];
+function extractNameCandidates(body){
+  const known = PERSONS.concat(DYNASTIES).concat(COUNTRIES).concat(COMPANIES);
+  const cue = /(说|曾言|有言|云|曾记否|先生|大夫|将军|教练|院士|老师|同志|大师|教授|之流|曾说过|曾坦言|回忆道|感慨|赞叹|告诫|劝勉|临终|生前|所言|写道|说过|留名|事迹|精神|榜样|偶像|前辈|先驱|泰斗|巨匠)/;
+  const out = [];
+  const seen = {};
+  for(let i=0;i<body.length;i++){
+    if(SURNAME_STR.indexOf(body[i])<0) continue;
+    const third = body[i+2]||'';
+    /* 第三字是汉字 → 优先按三字名；若三字名尾字是"说/言/云/道"则回落试两字名（如"李白说"→"李白"） */
+    const tryLens = (/[\u4e00-\u9fa5]/.test(third)) ? [3,2] : [2];
+    for(let ti=0;ti<tryLens.length;ti++){
+      const len = tryLens[ti];
+      const nm = body.substr(i,len);
+      if(nm.length<len) break;
+      if(len===3 && known.indexOf(nm)>=0) break; /* 命中库内三字名人，此位不再回落两字 */
+      if(NAME_TAIL_STOP.indexOf(nm[nm.length-1])>=0){ continue; }
+      if(/^[他她它你我之其]/.test(nm.slice(1))) continue; /* 代词性第二字（向他学/向她等） */
+      if(NAME_WORD_STOP.indexOf(nm)>=0) continue;
+      if(seen[nm]) continue;
+      if(known.indexOf(nm)>=0) continue;
+      const ctx = body.slice(Math.max(0,i-10), i+len+10);
+      if(!cue.test(ctx)) continue;
+      seen[nm]=1; out.push(nm); break;
+    }
+    if(out.length>=12) break;
+  }
+  return out;
+}
+function jsonpSug(name){
+  return new Promise((res)=>{
+    const cbn = 'obSug_'+Date.now().toString(36)+Math.floor(Math.random()*1000);
+    const s = document.createElement('script');
+    let done = false;
+    const t = setTimeout(()=>{ if(!done){ done=true; cleanup(); res([]); } }, 5000);
+    function cleanup(){ clearTimeout(t); try{ delete window[cbn]; }catch(e){ window[cbn]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cbn] = (d)=>{ if(done) return; done=true; cleanup(); res((d&&d.g)?d.g.map(x=>x.q||''):[]); };
+    s.src = 'https://www.baidu.com/sugrec?prod=pc&wd='+encodeURIComponent(name)+'&cb='+cbn;
+    s.onerror = ()=>{ if(!done){ done=true; cleanup(); res([]); } };
+    document.head.appendChild(s);
+  });
+}
+const BIO_HINT_RE = /(简介|生平|资料|历史|人物|百科|演员|作家|诗人|词人|运动员|将军|皇帝|皇后|宰相|诗人|院士|教授|教练|主席|总统|总理|书记|画家|音乐家|作曲|哲学家|思想家|文学家|数学家|科学家|医学|发明|改革|书法家|诺贝尔|冠军|奖|事迹|故事|评价|贡献|成就|出生|逝世)/;
+let CLOUD_PERSONS = null;
+function loadCloudPersons(){
+  if(CLOUD_PERSONS) return CLOUD_PERSONS;
+  try{ CLOUD_PERSONS = JSON.parse(localStorage.getItem('ob-cloud-persons')||'{}'); }catch(e){ CLOUD_PERSONS = {}; }
+  return CLOUD_PERSONS;
+}
+function saveCloudPersons(){ try{ localStorage.setItem('ob-cloud-persons', JSON.stringify(CLOUD_PERSONS||{})); }catch(e){} }
+async function onlineIsPerson(name){
+  const cache = loadCloudPersons();
+  if(cache[name]!=null) return cache[name];
+  const sugs = await jsonpSug(name);
+  /* 判定：有联想词（网上常出现）且（含身份/生平关键词 或 联想词≥2 条）→ 名人 */
+  const ok = sugs.length>0 && (sugs.some(q=>BIO_HINT_RE.test(q)) || sugs.length>=2);
+  cache[name] = ok; saveCloudPersons();
+  return ok;
+}
+async function onlineVerifyNames(f, body){
+  const cands = extractNameCandidates(body||'');
+  f.onlineChecked = []; f.onlineHits = [];
+  if(!cands.length) return;
+  const list = cands.slice(0,8);
+  const results = await Promise.all(list.map(n=>onlineIsPerson(n).then(ok=>({n,ok})).catch(()=>({n,ok:false}))));
+  f.onlineChecked = results.map(r=>r.n);
+  const hits = results.filter(r=>r.ok).map(r=>r.n);
+  if(hits.length){
+    hits.forEach(h=>{ if(f.namedList.indexOf(h)<0){ f.namedList.push(h); f.onlineHits.push(h); } });
+    f.namedN = f.namedList.length;
+    f.namedMention = (f.namedMention||0) + hits.reduce((a,h)=>a+((body||'').split(h).length-1),0);
+    f.factN = f.factSigN + f.namedN;
+  }
+}
+
 /* ---------- 学生档案存取 ---------- */
 function loadStudents(){
   try{ state.students = JSON.parse(localStorage.getItem('essayWB.v1')||'{}'); }
@@ -1168,10 +1252,11 @@ function renderSubmit(){
   if(bg) bg.addEventListener('click', doGrade);
   return wrap;
 }
-function doGrade(){
+async function doGrade(){
   const ta = document.querySelector('#in-essay');
   const src = ta ? ta.value.trim() : (state.parsed||state.essay);
   if(!src || countCJK(src)<50){ toast('⚠️ 请先提交作文内容（至少 50 字）'); return; }
+  toast('⏳ 正在批改，若含人名将联网比对名人身份…');
   const name = (document.querySelector('#in-student')?.value||'').trim();
   const title = (document.querySelector('#in-title')?.value||'').trim();
   const prompt = (document.querySelector('#in-prompt')?.value||'').trim();
@@ -1184,6 +1269,8 @@ function doGrade(){
   if(ta && state.parsed && ta.value.trim() !== state.parsed.trim()) srcType = 'paste'; /* 用户改动过解析文本，视为手动输入 */
   state.srcType = srcType;
   const f = analyzeEssay(src, {title, prompt});
+  /* 联网名人比对：库外未知人名经搜索联想词验证，网上常出现者计入事实论据 */
+  try{ await onlineVerifyNames(f, src); }catch(e){}
   const res = scoreEssay(f, {needChars:need, writing, manualDed:0, srcType});
   const revised = buildRevised(f);
   const suggestions = buildSuggestions(f, res, {needChars:need});
