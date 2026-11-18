@@ -495,13 +495,42 @@ async function parseFile(file, onStatus){
     return r.value;
   }
   if(/\.(png|jpe?g|bmp|webp)$/.test(name)){
-    if(!window.Tesseract) await loadScript(TESS_CDN);
-    const {data} = await Tesseract.recognize(file,'chi_sim',{
-      logger: m=>{ if(onStatus && m.progress!=null) onStatus('🔍 '+m.status+' '+Math.round(m.progress*100)+'%'); }
-    });
-    return data.text.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n');
+    return await ocrImage(file, onStatus);
   }
   throw new Error('暂不支持该格式，请上传 txt / docx / 图片，或直接粘贴文字');
+}
+
+/* 图片 OCR：预处理（放大+灰度+对比度拉伸）后识别，显著提升手写作文准确率 */
+async function preprocessImage(file){
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('图片读取失败')); i.src=url; });
+  const scale = Math.min(2.5, Math.max(1, 1600/Math.max(img.width,img.height))); /* 小图放大到约1600px */
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(img,0,0,c.width,c.height);
+  const d = ctx.getImageData(0,0,c.width,c.height);
+  const g = new Uint8ClampedArray(d.data.length/4);
+  let lo=255, hi=0;
+  for(let i=0;i<g.length;i++){ const v=(d.data[i*4]*0.299+d.data[i*4+1]*0.587+d.data[i*4+2]*0.114)|0; g[i]=v; if(v<lo)lo=v; if(v>hi)hi=v; }
+  const range=Math.max(1,hi-lo);
+  for(let i=0;i<g.length;i++){ const v=clamp((g[i]-lo)/range*255,0,255); d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=v; d.data[i*4+3]=255; }
+  ctx.putImageData(d,0,0);
+  URL.revokeObjectURL(url);
+  return c.toDataURL('image/png');
+}
+async function ocrImage(file, onStatus){
+  if(!window.Tesseract) await loadScript(TESS_CDN);
+  onStatus && onStatus('🔍 图像预处理（放大 / 灰度 / 提对比度）…');
+  const dataUrl = await preprocessImage(file);
+  const PSM = (window.Tesseract && Tesseract.PSM) ? Tesseract.PSM.AUTO : '3';
+  const {data} = await Tesseract.recognize(dataUrl,'chi_sim',{
+    tessedit_pageseg_mode: PSM,
+    preserve_interword_spaces:'1',
+    logger: m=>{ if(onStatus && m.progress!=null) onStatus('🔍 '+m.status+' '+Math.round(m.progress*100)+'%'); }
+  });
+  return data.text.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n');
 }
 
 /* ---------- 作文特征分析 ---------- */
@@ -978,7 +1007,7 @@ function renderSubmit(){
   '</div>'+
   (state.subTab==='paste'
     ? '<div class="fld"><textarea id="in-essay" placeholder="在此粘贴或输入学生作文全文……（首行如为标题可自动识别）">'+esc(state.parsed||state.essay)+'</textarea></div>'
-    : '<div class="empty" style="cursor:pointer;" id="drop-zone">'+(state.subTab==='img'?'🖼️ 点击选择图片（JPG / PNG / WEBP）<br>首次使用会加载本地识别引擎，识别结果可直接在下方修正':'📄 点击选择文档（.docx / .txt）<br>自动提取全文文字')+'</div><input type="file" id="in-file" style="display:none;" accept="'+(state.subTab==='img'?'image/*':'.docx,.txt,.md')+'">'+
+    : '<div class="empty" style="cursor:pointer;" id="drop-zone">'+(state.subTab==='img'?'🖼️ 点击选择图片（可一次多选，JPG / PNG / WEBP）<br>多页照片将按顺序识别合并 · 自动放大增强，识别更准 · 结果可在下方修正':'📄 点击选择文档（.docx / .txt）<br>自动提取全文文字')+'</div><input type="file" id="in-file" style="display:none;" '+(state.subTab==='img'?'multiple ':'')+'accept="'+(state.subTab==='img'?'image/*':'.docx,.txt,.md')+'">'+
       '<div class="status" id="parse-status"></div>')+
   '</div>'+
   '<div class="sec"><h3><span class="ico">⚙️</span>批改设置</h3>'+
@@ -1000,14 +1029,20 @@ function renderSubmit(){
   const fi = wrap.querySelector('#in-file');
   if(dz) dz.addEventListener('click',()=>fi.click());
   if(fi) fi.addEventListener('change', async e=>{
-    const f = e.target.files[0]; if(!f) return;
+    const files = Array.from(e.target.files||[]); if(!files.length) return;
     const st = wrap.querySelector('#parse-status');
-    st.textContent = '⏳ 正在解析 '+f.name+' …';
     try{
-      const txt = await parseFile(f, s=>st.textContent=s);
-      state.parsed = txt;
-      st.textContent = '✅ 解析成功，共提取 '+countCJK(txt)+' 字，已填入文本（请回「粘贴文字」页核对）';
-      state.subTab='paste'; refreshOpen(); toast('✅ 文件解析完成，请核对后批改');
+      let all=''; let used=0;
+      for(let i=0;i<files.length;i++){
+        const f = files[i];
+        const pre = files.length>1 ? ('（第 '+(i+1)+' / '+files.length+' 张）') : '';
+        const txt = await parseFile(f, s=>st.textContent=pre+s);
+        if(txt && txt.trim()){ all += (all?'\n\n':'')+txt.trim(); used++; }
+      }
+      if(!all.trim()) throw new Error('未能识别出文字，请确认图片清晰、光线充足');
+      state.parsed = all;
+      st.textContent = '✅ 共处理 '+used+' 个文件，识别 '+countCJK(all)+' 字，已按顺序合并填入文本';
+      state.subTab='paste'; refreshOpen(); toast('✅ 识别完成，请核对后批改');
     }catch(err){ st.textContent = '❌ '+err.message+'（图片识别需联网加载引擎，失败时可直接粘贴文字）'; }
   });
   const bg = wrap.querySelector('#btn-grade');
@@ -1029,7 +1064,7 @@ function doGrade(){
   const res = scoreEssay(f, {needChars:need, writing, manualDed:0});
   const revised = buildRevised(f);
   const suggestions = buildSuggestions(f, res, {needChars:need});
-  state.result = {f, res, revised, suggestions, student:name, title:f.title, need, writing, date:todayStr()};
+  state.result = {f, res, revised, suggestions, student:name, title:f.title, need, writing, date:todayStr(), archived:!!name};
   let recSaved = false;
   if(name){ saveRecord(name, f, res, {revised, suggestions}); recSaved = true; }
   refreshPreviews();
@@ -1037,6 +1072,30 @@ function doGrade(){
   openPanel('report', document.querySelector('.card[data-panel="report"]'));
 }
 
+/* ---------- 评分报告：按学生归档 ---------- */
+function buildArchiveBox(){
+  const r = state.result;
+  if(!r) return '';
+  const name = r.student||'';
+  const hist = name && state.students[name] ? state.students[name].records : [];
+  const histRows = hist.map(rec=>'<div class="hist-row" style="cursor:default;"><span class="t">'+esc(rec.title)+'</span><span class="band">'+esc(rec.bandName)+'</span><span style="color:#999;">'+esc(rec.date)+' · '+rec.chars+'字</span><span class="sc">'+rec.score+'分</span></div>').join('');
+  return '<div class="adjust" style="margin-top:14px;">🗂️ 按学生归档：<label style="flex:none;">姓名 <input type="text" id="arch-name" style="width:110px;" placeholder="如：张晓雨" value="'+esc(name)+'"></label>'+
+    '<button class="btn small mint" id="btn-archive">'+(r.archived?'📥 再次归档':'📥 存入档案')+'</button>'+
+    (r.archived ? '<span style="color:#6B8E7B;font-weight:bold;">✅ 已记录到「'+esc(name)+'」（该生共 '+hist.length+' 条）</span>' : '<span style="color:#999;">未归档：填写姓名后点击存入，报告将计入该生专属档案</span>')+'</div>'+
+    (hist.length ? '<div style="margin-top:8px;">'+histRows+'</div>' : '');
+}
+function bindArchiveBox(wrap){
+  const ba = wrap.querySelector('#btn-archive');
+  if(!ba) return;
+  ba.addEventListener('click', ()=>{
+    const nm = wrap.querySelector('#arch-name').value.trim();
+    if(!nm){ toast('⚠️ 请先填写学生姓名'); return; }
+    saveRecord(nm, state.result.f, state.result.res, {revised:state.result.revised, suggestions:state.result.suggestions});
+    state.result.student = nm; state.result.archived = true;
+    refreshPreviews(); refreshOpen();
+    toast('✅ 本份评分报告已归档到「'+nm+'」的专属档案');
+  });
+}
 /* ---------- 渲染：评分报告 ---------- */
 function renderReport(rec){
   /* rec: state.result 或档案记录，统一成视图模型 */
@@ -1064,8 +1123,10 @@ function renderReport(rec){
   dedRows+
   '</table>'+
   (rec && rec.f ? '<div class="adjust">🛠️ 教师微调（改后自动重算总分）：<label>内容 <input type="number" id="adj-C" step="0.5" min="0" max="20" value="'+vm.C+'"></label><label>表达 <input type="number" id="adj-E" step="0.5" min="0" max="20" value="'+vm.E+'"></label><label>发展 <input type="number" id="adj-D" step="0.5" min="0" max="10" value="'+vm.D+'"></label><label>另扣 <input type="number" id="adj-ded" step="1" min="0" max="10" value="0"></label><button class="btn small mint" id="btn-recalc">重算</button></div>' : '')+
+  (rec && rec.f ? buildArchiveBox() : '')+
   '</div>';
   if(rec && rec.f){
+    bindArchiveBox(wrap);
     const bc = wrap.querySelector('#btn-recalc');
     bc.addEventListener('click', ()=>{
       const C=parseFloat(wrap.querySelector('#adj-C').value)||0;
